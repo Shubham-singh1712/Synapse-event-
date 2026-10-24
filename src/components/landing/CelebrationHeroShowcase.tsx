@@ -168,10 +168,10 @@ export function CelebrationHeroShowcase({ user }: Props) {
       role="region"
       aria-roledescription="carousel"
       aria-label="Celebration Showcase Hero"
-      className="relative min-h-[500px] sm:min-h-[560px] md:min-h-[620px] lg:min-h-[680px] flex flex-col justify-between overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-coral bg-[#130716]"
+      className="relative min-h-[500px] sm:min-h-[560px] md:min-h-[620px] lg:min-h-[680px] flex flex-col justify-between overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-coral bg-[#140816]"
     >
       {/* 1. Full-Width Photographic Background Layer with Smooth Crossfade */}
-      <div className="absolute inset-0 z-0 bg-[#130716]">
+      <div className="absolute inset-0 z-0 bg-[#140816]">
         {HERO_SLIDES.map((slide, idx) => {
           const isActive = idx === activeIndex;
           return (
@@ -188,7 +188,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
                 fill
                 priority={idx === 0}
                 sizes="100vw"
-                className={`object-cover object-center transition-transform duration-[8000ms] ease-out ${
+                className={`object-cover object-center brightness-[0.92] contrast-[1.05] transition-transform duration-[8000ms] ease-out ${
                   isActive && !prefersReducedMotion ? "scale-105" : "scale-100"
                 }`}
               />
@@ -196,41 +196,41 @@ export function CelebrationHeroShowcase({ user }: Props) {
           );
         })}
 
-        {/* 2. Carefully Tuned Multi-Stop Dark Plum Contrast Overlay */}
-        {/* Layer A: Base deep plum scrim ensuring baseline contrast across all images */}
-        <div className="absolute inset-0 z-20 bg-[#150917]/75 backdrop-blur-[0.5px]" />
+        {/* 2. Balanced Visual Contrast Scrim — Keeps photography rich and vibrant while preserving 100% text clarity */}
+        {/* Layer A: Subtle overall tint (30%), letting 70% of the photograph's light, colors, and textures shine through */}
+        <div className="absolute inset-0 z-20 bg-[#160a18]/30" />
 
-        {/* Layer B: Directional vertical gradient focusing highest density over text */}
-        <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#130716]/90 via-[#130716]/65 to-[#130716]/95" />
+        {/* Layer B: Gentle edge vignette (darker at top/bottom to frame navbar and benefits, clear in the middle) */}
+        <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#130716]/65 via-transparent to-[#130716]/80" />
 
-        {/* Layer C: Subtle central radial vignette to ground typography without losing photographic depth */}
-        <div className="absolute inset-0 z-20 bg-[radial-gradient(ellipse_at_center,_transparent_20%,_rgba(19,7,22,0.6)_100%)] pointer-events-none" />
+        {/* Layer C: Soft radial contrast pocket directly behind content so text stays readable without darkening the entire photo */}
+        <div className="absolute inset-0 z-20 bg-[radial-gradient(ellipse_at_center,_rgba(19,7,22,0.5)_0%,_rgba(19,7,22,0.2)_55%,_transparent_80%)] pointer-events-none" />
       </div>
 
       {/* 3. Hero Editorial Content (Positioned Front and Center with controlled max-width) */}
       <div className="relative z-30 max-w-4xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-12 text-center my-auto flex flex-col items-center">
         {/* Compact, Refined Celebration Theme Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 shadow-sm mb-5 sm:mb-6 transition-all duration-300">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/50 backdrop-blur-md border border-white/20 shadow-md mb-5 sm:mb-6 transition-all duration-300">
           <CurrentIcon className="w-3.5 h-3.5 text-[#FF7A60] animate-pulse" />
-          <span className="text-xs font-medium tracking-wide text-white/95 transition-opacity duration-300">
+          <span className="text-xs font-medium tracking-wide text-white transition-opacity duration-300 drop-shadow-sm">
             {currentSlide.eyebrow}
           </span>
           <span className="w-1 h-1 rounded-full bg-[#FF7A60]" />
-          <span className="text-[11px] font-mono text-white/70">
+          <span className="text-[11px] font-mono text-white/80">
             {activeIndex + 1}/{HERO_SLIDES.length}
           </span>
         </div>
 
-        {/* Primary Editorial Headline — High Contrast Ivory / Coral */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] font-serif font-black text-white tracking-tight leading-[1.12] mb-4 sm:mb-6 drop-shadow-sm">
+        {/* Primary Editorial Headline — High Contrast Ivory / Coral with Dedicated Text Shadow */}
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] font-serif font-black text-white tracking-tight leading-[1.12] mb-4 sm:mb-6 [text-shadow:_0_2px_16px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]">
           Plan the celebration.{" "}
-          <span className="block sm:inline font-normal italic text-[#FF7A60]">
+          <span className="block sm:inline font-normal italic text-[#FF7A60] [text-shadow:_0_2px_16px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]">
             Not the chaos.
           </span>
         </h1>
 
         {/* Clear, Human-Centered Description within Sensible Max-Width */}
-        <p className="text-sm sm:text-base md:text-lg text-stone-200/90 max-w-xl sm:max-w-2xl mx-auto leading-relaxed font-sans mb-7 sm:mb-9 drop-shadow-xs">
+        <p className="text-sm sm:text-base md:text-lg text-white/95 max-w-xl sm:max-w-2xl mx-auto leading-relaxed font-sans mb-7 sm:mb-9 [text-shadow:_0_1px_10px_rgba(0,0,0,0.9)]">
           From birthdays to weddings, turn your ideas, guest list, and budget into
           a celebration worth remembering — with a little help from AI.
         </p>
@@ -240,7 +240,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
           <Link
             href={user ? "/dashboard" : "/sign-up"}
             id="hero-primary-cta"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm font-bold bg-coral hover:bg-coral-hover text-white shadow-lg shadow-coral/25 hover:shadow-coral/40 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl text-sm font-bold bg-coral hover:bg-coral-hover text-white shadow-xl shadow-black/40 hover:shadow-black/60 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
           >
             {user ? "Open Your Dashboard" : "Start Planning Free"}
             <ArrowRight className="w-4 h-4" />
@@ -248,7 +248,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
           <a
             href="#benefits"
             id="hero-secondary-cta"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-stone-300 hover:text-white transition-colors duration-200 group"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 sm:px-5 sm:py-3 text-xs sm:text-sm font-semibold text-white/90 hover:text-white bg-black/30 hover:bg-black/45 backdrop-blur-sm border border-white/20 rounded-xl sm:rounded-2xl transition-all duration-200 group shadow-md"
           >
             <span>Explore Features</span>
             <ChevronRight className="w-3.5 h-3.5 text-[#FF7A60] group-hover:translate-x-0.5 transition-transform" />
@@ -257,22 +257,24 @@ export function CelebrationHeroShowcase({ user }: Props) {
       </div>
 
       {/* 4. Minimal Discreet Slideshow Indicators */}
-      <div className="relative z-30 pb-4 sm:pb-6 flex items-center justify-center gap-2">
-        {HERO_SLIDES.map((slide, idx) => {
-          const isActive = idx === activeIndex;
-          return (
-            <button
-              key={slide.id}
-              onClick={() => goToSlide(idx)}
-              aria-label={`Go to slide ${idx + 1}: ${slide.eyebrow}`}
-              className={`h-1.5 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-white ${
-                isActive
-                  ? "w-6 bg-[#FF7A60] shadow-xs"
-                  : "w-1.5 bg-white/30 hover:bg-white/60"
-              }`}
-            />
-          );
-        })}
+      <div className="relative z-30 pb-4 sm:pb-6 flex items-center justify-center">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-md border border-white/15 shadow-sm">
+          {HERO_SLIDES.map((slide, idx) => {
+            const isActive = idx === activeIndex;
+            return (
+              <button
+                key={slide.id}
+                onClick={() => goToSlide(idx)}
+                aria-label={`Go to slide ${idx + 1}: ${slide.eyebrow}`}
+                className={`h-1.5 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-white ${
+                  isActive
+                    ? "w-6 bg-[#FF7A60] shadow-xs"
+                    : "w-1.5 bg-white/40 hover:bg-white/80"
+                }`}
+              />
+            );
+          })}
+        </div>
       </div>
     </section>
   );

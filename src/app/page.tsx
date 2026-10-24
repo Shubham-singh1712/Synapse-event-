@@ -134,10 +134,16 @@ export default async function PublicLandingPage() {
                 </div>
 
                 <Link
-                  href="/events/new?type=WEDDING"
-                  className="inline-flex items-center justify-between text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group"
+                  href={
+                    user
+                      ? "/events/new?type=WEDDING"
+                      : `/sign-in?returnUrl=${encodeURIComponent("/events/new?type=WEDDING")}&type=WEDDING`
+                  }
+                  id="plan-wedding-action"
+                  className="inline-flex items-center justify-between w-full text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-b-xl transition-colors"
+                  aria-label="Plan a Wedding celebration"
                 >
-                  <span>Plan a Wedding</span>
+                  <span className="group-hover:underline underline-offset-4">Plan a Wedding</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -175,10 +181,16 @@ export default async function PublicLandingPage() {
                 </div>
 
                 <Link
-                  href="/events/new?type=BIRTHDAY"
-                  className="inline-flex items-center justify-between text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group"
+                  href={
+                    user
+                      ? "/events/new?type=BIRTHDAY"
+                      : `/sign-in?returnUrl=${encodeURIComponent("/events/new?type=BIRTHDAY")}&type=BIRTHDAY`
+                  }
+                  id="plan-birthday-action"
+                  className="inline-flex items-center justify-between w-full text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-b-xl transition-colors"
+                  aria-label="Plan a Birthday celebration"
                 >
-                  <span>Plan a Birthday</span>
+                  <span className="group-hover:underline underline-offset-4">Plan a Birthday</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -216,10 +228,16 @@ export default async function PublicLandingPage() {
                 </div>
 
                 <Link
-                  href="/events/new?type=COMMUNITY"
-                  className="inline-flex items-center justify-between text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group"
+                  href={
+                    user
+                      ? "/events/new?type=COMMUNITY"
+                      : `/sign-in?returnUrl=${encodeURIComponent("/events/new?type=COMMUNITY")}&type=COMMUNITY`
+                  }
+                  id="plan-community-action"
+                  className="inline-flex items-center justify-between w-full text-xs font-bold text-coral hover:text-coral-hover pt-4 border-t border-border group focus:outline-none focus-visible:ring-2 focus-visible:ring-coral rounded-b-xl transition-colors"
+                  aria-label="Plan a Community Event"
                 >
-                  <span>Plan a Community Event</span>
+                  <span className="group-hover:underline underline-offset-4">Plan a Community Event</span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>

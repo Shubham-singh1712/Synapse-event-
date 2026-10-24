@@ -5,6 +5,7 @@ import { users, sessions } from "@/lib/db/schema";
 import { cookies } from "next/headers";
 import { AUTH_SESSION_DAYS, AuthenticatedUser } from "./auth-service";
 import type { NextRequest } from "next/server";
+import { sanitizeRedirectPath } from "./return-url";
 
 export const GOOGLE_OAUTH_STATE_COOKIE = "synapse_oauth_state";
 export const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -81,12 +82,17 @@ export function generateOAuthState(): string {
 
 /**
  * Sets the secure state cookie for CSRF validation during OAuth flow,
- * preserving the exact redirect URI used for this authorization cycle.
+ * preserving the exact redirect URI and safe returnUrl used for this authorization cycle.
  */
-export async function setOAuthStateCookie(state: string, redirectUri?: string): Promise<void> {
+export async function setOAuthStateCookie(
+  state: string,
+  redirectUri?: string,
+  returnUrl?: string
+): Promise<void> {
   const cookieStore = await cookies();
   const isProduction = process.env.NODE_ENV === "production";
-  const cookieValue = redirectUri ? `${state}|${redirectUri}` : state;
+  const safeReturn = returnUrl ? sanitizeRedirectPath(returnUrl) : "";
+  const cookieValue = `${state}|${redirectUri || ""}|${safeReturn}`;
 
   cookieStore.set(GOOGLE_OAUTH_STATE_COOKIE, cookieValue, {
     httpOnly: true,
@@ -99,11 +105,11 @@ export async function setOAuthStateCookie(state: string, redirectUri?: string): 
 
 /**
  * Validates and clears the OAuth state cookie.
- * Returns the exact redirectUri that initiated the flow.
+ * Returns the exact redirectUri and safe returnUrl that initiated the flow.
  */
 export async function validateAndClearOAuthStateCookie(
   receivedState: string
-): Promise<{ valid: boolean; redirectUri?: string }> {
+): Promise<{ valid: boolean; redirectUri?: string; returnUrl?: string }> {
   if (!receivedState || receivedState.trim().length === 0) {
     return { valid: false };
   }
@@ -118,7 +124,7 @@ export async function validateAndClearOAuthStateCookie(
     return { valid: false };
   }
 
-  const [storedState, storedRedirectUri] = storedValue.split("|");
+  const [storedState, storedRedirectUri, storedReturnUrl] = storedValue.split("|");
   if (!storedState) {
     return { valid: false };
   }
@@ -130,7 +136,11 @@ export async function validateAndClearOAuthStateCookie(
       return { valid: false };
     }
     const isMatch = crypto.timingSafeEqual(bufReceived, bufStored);
-    return { valid: isMatch, redirectUri: storedRedirectUri || undefined };
+    return {
+      valid: isMatch,
+      redirectUri: storedRedirectUri || undefined,
+      returnUrl: storedReturnUrl ? sanitizeRedirectPath(storedReturnUrl) : undefined,
+    };
   } catch {
     return { valid: false };
   }
@@ -307,14 +317,11 @@ export async function linkOrCreateGoogleUserAndSession(
   };
 }
 
-/**
- * Validates redirect paths to prevent open redirect vulnerabilities.
- */
-export function sanitizeRedirectPath(path?: string | null): string {
-  if (!path) return "/dashboard";
-  // Must be a relative path starting with '/' and NOT with '//' (protocol-relative)
-  if (path.startsWith("/") && !path.startsWith("//") && !path.includes("\\")) {
-    return path;
-  }
-  return "/dashboard";
-}
+export {
+  sanitizeRedirectPath,
+  validateArchetype,
+  buildAuthRedirectUrl,
+  type ValidArchetype,
+  VALID_ARCHETYPES,
+} from "./return-url";
+

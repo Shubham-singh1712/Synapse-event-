@@ -1,9 +1,11 @@
 import React from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import EventWizard, { WizardArchetype } from "@/components/wizard/EventWizard";
 import { getCurrentUser } from "@/lib/auth/auth-service";
 import ThemeToggle from "@/components/theme/ThemeToggle";
+import { validateArchetype } from "@/lib/auth/return-url";
 
 export default async function NewEventPage({
   searchParams,
@@ -13,11 +15,13 @@ export default async function NewEventPage({
   const { type } = await searchParams;
   const user = await getCurrentUser();
 
-  const validArchetypes: WizardArchetype[] = ["WEDDING", "BIRTHDAY", "COMMUNITY"];
-  const selectedArchetype: WizardArchetype =
-    type && validArchetypes.includes(type.toUpperCase() as WizardArchetype)
-      ? (type.toUpperCase() as WizardArchetype)
-      : "WEDDING";
+  const selectedArchetype: WizardArchetype = validateArchetype(type) || "WEDDING";
+
+  // Authentication Gate: Require authenticated user before creating an event
+  if (!user) {
+    const returnUrl = `/events/new?type=${selectedArchetype}`;
+    redirect(`/sign-in?returnUrl=${encodeURIComponent(returnUrl)}&type=${selectedArchetype}`);
+  }
 
   return (
     <div className="min-h-screen bg-page text-primary flex flex-col justify-between p-4 sm:p-8 transition-colors">
@@ -25,11 +29,11 @@ export default async function NewEventPage({
         {/* Top Navigation */}
         <div className="flex items-center justify-between">
           <Link
-            href={user ? "/dashboard" : "/"}
+            href="/dashboard"
             className="inline-flex items-center gap-2 text-xs font-semibold text-secondary hover:text-primary transition px-3 py-1.5 rounded-xl border border-border hover:bg-surface"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{user ? "Back to Dashboard" : "Back to Home"}</span>
+            <span>Back to Dashboard</span>
           </Link>
 
           <div className="flex items-center gap-3">

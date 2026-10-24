@@ -7,6 +7,7 @@ interface GoogleSignInButtonProps {
   className?: string;
   disabled?: boolean;
   text?: string;
+  returnUrl?: string;
 }
 
 /**
@@ -40,6 +41,7 @@ export default function GoogleSignInButton({
   className = "",
   disabled = false,
   text = "Continue with Google",
+  returnUrl,
 }: GoogleSignInButtonProps) {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -49,7 +51,10 @@ export default function GoogleSignInButton({
       return;
     }
     setIsRedirecting(true);
-    window.location.href = "/api/auth/google";
+    const target = returnUrl
+      ? `/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}`
+      : "/api/auth/google";
+    window.location.href = target;
   };
 
   return (

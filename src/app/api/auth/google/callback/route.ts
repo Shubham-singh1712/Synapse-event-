@@ -18,7 +18,20 @@ export async function GET(req: NextRequest) {
 
   const signInUrl = new URL("/sign-in", req.url);
 
-  // 1. Handle user cancellation or provider rejection from Google
+  // 1. Verify CSRF state token and retrieve the original redirect URI + returnUrl
+  let stateResult: { valid: boolean; redirectUri?: string; returnUrl?: string } = {
+    valid: false,
+  };
+  if (state) {
+    stateResult = await validateAndClearOAuthStateCookie(state);
+  }
+
+  // Preserve returnUrl on sign-in redirect if present
+  if (stateResult.returnUrl) {
+    signInUrl.searchParams.set("returnUrl", stateResult.returnUrl);
+  }
+
+  // 2. Handle user cancellation or provider rejection from Google
   if (errorParam) {
     if (errorParam === "access_denied") {
       signInUrl.searchParams.set("error", "GOOGLE_AUTH_CANCELLED");
@@ -28,16 +41,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // 2. Validate presence of code and state
-  if (!code || !state) {
-    signInUrl.searchParams.set("error", "GOOGLE_AUTH_FAILED");
-    return NextResponse.redirect(signInUrl);
-  }
-
-  // 3. Verify CSRF state token and retrieve the original redirect URI
-  const stateResult = await validateAndClearOAuthStateCookie(state);
-  if (!stateResult.valid) {
-    signInUrl.searchParams.set("error", "GOOGLE_AUTH_STATE_MISMATCH");
+  // 3. Validate presence of code and state validation outcome
+  if (!code || !state || !stateResult.valid) {
+    signInUrl.searchParams.set("error", !stateResult.valid ? "GOOGLE_AUTH_STATE_MISMATCH" : "GOOGLE_AUTH_FAILED");
     return NextResponse.redirect(signInUrl);
   }
 
@@ -68,9 +74,10 @@ export async function GET(req: NextRequest) {
     // 8. Establish session cookie
     await setAuthSessionCookie(sessionToken);
 
-    // 9. Redirect to dashboard on success
-    const dashboardUrl = new URL("/dashboard", req.url);
-    return NextResponse.redirect(dashboardUrl);
+    // 9. Redirect to target return URL or dashboard on success
+    const targetPath = stateResult.returnUrl || "/dashboard";
+    const destinationUrl = new URL(targetPath, req.url);
+    return NextResponse.redirect(destinationUrl);
   } catch (error) {
     if (error instanceof DatabaseConfigurationError) {
       signInUrl.searchParams.set("error", "DATABASE_UNCONFIGURED");

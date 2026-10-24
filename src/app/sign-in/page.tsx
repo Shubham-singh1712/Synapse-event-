@@ -6,6 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, AlertTriangle, Database, Sparkles, Heart, Settings } from "lucide-react";
 import ThemeToggle from "@/components/theme/ThemeToggle";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import {
+  sanitizeRedirectPath,
+  validateArchetype,
+  buildAuthRedirectUrl,
+} from "@/lib/auth/return-url";
 
 function SignInContent() {
   const router = useRouter();
@@ -17,6 +22,17 @@ function SignInContent() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isDbUnprovisioned, setIsDbUnprovisioned] = useState(false);
   const [isGoogleUnconfigured, setIsGoogleUnconfigured] = useState(false);
+
+  const returnUrlParam = searchParams.get("returnUrl");
+  const typeParam = searchParams.get("type");
+  const validArchetype = validateArchetype(typeParam);
+
+  let safeDestination = "/dashboard";
+  if (returnUrlParam) {
+    safeDestination = sanitizeRedirectPath(returnUrlParam);
+  } else if (validArchetype) {
+    safeDestination = `/events/new?type=${validArchetype}`;
+  }
 
   // Parse error query params from OAuth redirects or callback failures
   useEffect(() => {
@@ -72,8 +88,8 @@ function SignInContent() {
         return;
       }
 
-      // Success: redirect to dashboard
-      router.push("/dashboard");
+      // Success: redirect to preserved return URL or dashboard
+      router.push(safeDestination);
       router.refresh();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Network error. Please try again.");
@@ -96,6 +112,13 @@ function SignInContent() {
         <p className="text-sm text-muted">
           Access your curated celebrations, budgets, and collaborative workspaces.
         </p>
+
+        {validArchetype && (
+          <div className="mt-3 bg-coral/10 border border-coral/20 rounded-2xl py-2 px-3 text-xs text-center text-primary font-medium">
+            Sign in to continue planning your{" "}
+            <span className="font-bold text-coral capitalize">{validArchetype.toLowerCase()}</span> celebration
+          </div>
+        )}
       </div>
 
       {/* Google OAuth Configuration Notice */}
@@ -151,7 +174,10 @@ function SignInContent() {
       <div className="bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-soft transition-colors">
         {/* 1. Google OAuth Option */}
         <div className="space-y-4">
-          <GoogleSignInButton text="Continue with Google" />
+          <GoogleSignInButton
+            text="Continue with Google"
+            returnUrl={safeDestination !== "/dashboard" ? safeDestination : undefined}
+          />
 
           {/* Visual Divider */}
           <div className="relative flex items-center justify-center my-5">
@@ -216,7 +242,10 @@ function SignInContent() {
 
           <p className="text-center text-xs text-muted pt-2">
             Don&apos;t have an account?{" "}
-            <Link href="/sign-up" className="text-coral hover:underline font-semibold">
+            <Link
+              href={buildAuthRedirectUrl(typeParam, returnUrlParam, "/sign-up")}
+              className="text-coral hover:underline font-semibold"
+            >
               Create an Account
             </Link>
           </p>

@@ -249,6 +249,7 @@ export default function EventWizard({
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSubmitting) return;
     if (!validateStep(step)) return;
 
     setIsSubmitting(true);

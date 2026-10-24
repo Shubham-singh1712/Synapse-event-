@@ -6,6 +6,8 @@ import {
   sanitizeRedirectPath,
   GOOGLE_AUTH_URL,
   getGoogleRedirectUri,
+  validateArchetype,
+  buildAuthRedirectUrl,
 } from "@/lib/auth/google-oauth";
 import { NextRequest } from "next/server";
 
@@ -108,5 +110,52 @@ describe("Google OAuth Security & Configuration", () => {
     expect(sanitizeRedirectPath("javascript:alert(1)")).toBe("/dashboard");
     expect(sanitizeRedirectPath(null)).toBe("/dashboard");
     expect(sanitizeRedirectPath(undefined)).toBe("/dashboard");
+
+    // Loop prevention: redirecting back to auth pages falls back to /dashboard
+    expect(sanitizeRedirectPath("/sign-in")).toBe("/dashboard");
+    expect(sanitizeRedirectPath("/sign-up")).toBe("/dashboard");
+  });
+
+  // 6. Event Archetype Validation & Preselection
+  it("validates supported celebration archetypes safely and case-insensitively", () => {
+    expect(validateArchetype("WEDDING")).toBe("WEDDING");
+    expect(validateArchetype("wedding")).toBe("WEDDING");
+    expect(validateArchetype("BIRTHDAY")).toBe("BIRTHDAY");
+    expect(validateArchetype("birthday")).toBe("BIRTHDAY");
+    expect(validateArchetype("COMMUNITY")).toBe("COMMUNITY");
+    expect(validateArchetype("community")).toBe("COMMUNITY");
+
+    // Unsupported or malformed inputs return null
+    expect(validateArchetype("GALA")).toBeNull();
+    expect(validateArchetype("DINNER")).toBeNull();
+    expect(validateArchetype("")).toBeNull();
+    expect(validateArchetype(null)).toBeNull();
+    expect(validateArchetype(undefined)).toBeNull();
+  });
+
+  // 7. Safe Auth Redirect URL Construction
+  it("constructs safe authentication redirect URLs preserving returnUrl and archetype", () => {
+    // Wedding preselection
+    const weddingAuth = buildAuthRedirectUrl("WEDDING", null, "/sign-in");
+    expect(weddingAuth).toContain("/sign-in?");
+    expect(weddingAuth).toContain("returnUrl=%2Fevents%2Fnew%3Ftype%3DWEDDING");
+    expect(weddingAuth).toContain("type=WEDDING");
+
+    // Birthday preselection
+    const birthdayAuth = buildAuthRedirectUrl("BIRTHDAY", null, "/sign-up");
+    expect(birthdayAuth).toContain("/sign-up?");
+    expect(birthdayAuth).toContain("returnUrl=%2Fevents%2Fnew%3Ftype%3DBIRTHDAY");
+    expect(birthdayAuth).toContain("type=BIRTHDAY");
+
+    // Community preselection
+    const communityAuth = buildAuthRedirectUrl("COMMUNITY", null, "/sign-in");
+    expect(communityAuth).toContain("/sign-in?");
+    expect(communityAuth).toContain("returnUrl=%2Fevents%2Fnew%3Ftype%3DCOMMUNITY");
+    expect(communityAuth).toContain("type=COMMUNITY");
+
+    // Invalid archetype defaults safely
+    const invalidAuth = buildAuthRedirectUrl("INVALID", null, "/sign-in");
+    expect(invalidAuth).toContain("returnUrl=%2Fevents%2Fnew");
+    expect(invalidAuth).not.toContain("type=");
   });
 });

@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   Sparkles,
   Shield,
+  Calculator,
   Clock,
   ArrowRight,
   CheckCircle2,
@@ -30,6 +31,58 @@ export default async function PublicLandingPage() {
       <main className="flex-1">
         {/* 2. Living Celebration Showcase Hero */}
         <CelebrationHeroShowcase user={user} />
+
+        {/* 2b. Core Celebration Benefits Highlight */}
+        <section id="benefits" className="py-12 sm:py-16 bg-surface border-b border-border">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+              {/* Benefit 1 */}
+              <div className="bg-page/70 dark:bg-page/40 rounded-2xl p-6 sm:p-7 border border-border/80 hover:border-coral/40 transition-all hover:shadow-subtle flex flex-col justify-between">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-coral/10 text-coral flex items-center justify-center mb-4">
+                    <Calculator className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-serif font-bold text-primary mb-2">
+                    A budget that stays clear.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted leading-relaxed">
+                    Set envelope targets for catering, venues, and decor. Track deposits and balance payments so you never encounter surprise costs.
+                  </p>
+                </div>
+              </div>
+
+              {/* Benefit 2 */}
+              <div className="bg-page/70 dark:bg-page/40 rounded-2xl p-6 sm:p-7 border border-border/80 hover:border-coral/40 transition-all hover:shadow-subtle flex flex-col justify-between">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-champagne/30 text-champagne-dark dark:text-champagne flex items-center justify-center mb-4">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-serif font-bold text-primary mb-2">
+                    A plan that keeps everyone on track.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted leading-relaxed">
+                    A unified schedule combining major milestones and day-of checklist tasks. Keep family, hosts, and vendors aligned effortlessly.
+                  </p>
+                </div>
+              </div>
+
+              {/* Benefit 3 */}
+              <div className="bg-page/70 dark:bg-page/40 rounded-2xl p-6 sm:p-7 border border-border/80 hover:border-coral/40 transition-all hover:shadow-subtle flex flex-col justify-between">
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-plum/15 text-plum-light dark:text-plum flex items-center justify-center mb-4">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-lg font-serif font-bold text-primary mb-2">
+                    Ideas made for your celebration.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted leading-relaxed">
+                    Discover visual moodboards and get tailored copilot recommendations grounded in your actual event dates, guest count, and traditions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* 3. Event Types Showcase (Weddings, Birthdays, Community Gatherings) */}
         <section id="event-types" className="py-20 bg-surface border-y border-border">

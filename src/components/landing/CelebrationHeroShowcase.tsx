@@ -168,7 +168,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
       role="region"
       aria-roledescription="carousel"
       aria-label="Celebration Showcase Hero"
-      className="relative min-h-[500px] sm:min-h-[560px] md:min-h-[620px] lg:min-h-[680px] flex flex-col justify-between overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-coral bg-[#140816]"
+      className="relative min-h-[calc(100vh-74px)] sm:min-h-[calc(100svh-74px)] flex items-center justify-center overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-coral bg-[#140816] px-4 sm:px-6 py-10 sm:py-12"
     >
       {/* 1. Full-Width Photographic Background Layer with Smooth Crossfade */}
       <div className="absolute inset-0 z-0 bg-[#140816]">
@@ -207,10 +207,10 @@ export function CelebrationHeroShowcase({ user }: Props) {
         <div className="absolute inset-0 z-20 bg-[radial-gradient(ellipse_at_center,_rgba(19,7,22,0.5)_0%,_rgba(19,7,22,0.2)_55%,_transparent_80%)] pointer-events-none" />
       </div>
 
-      {/* 3. Hero Editorial Content (Positioned Front and Center with controlled max-width) */}
-      <div className="relative z-30 max-w-4xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-12 text-center my-auto flex flex-col items-center">
+      {/* 3. Hero Editorial Content (Unified, Perfectly Centered Content Group) */}
+      <div className="relative z-30 max-w-4xl mx-auto text-center flex flex-col items-center">
         {/* Compact, Refined Celebration Theme Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/50 backdrop-blur-md border border-white/20 shadow-md mb-5 sm:mb-6 transition-all duration-300">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/50 backdrop-blur-md border border-white/20 shadow-md mb-4 sm:mb-5 transition-all duration-300">
           <CurrentIcon className="w-3.5 h-3.5 text-[#FF7A60] animate-pulse" />
           <span className="text-xs font-medium tracking-wide text-white transition-opacity duration-300 drop-shadow-sm">
             {currentSlide.eyebrow}
@@ -222,7 +222,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
         </div>
 
         {/* Primary Editorial Headline — High Contrast Ivory / Coral with Dedicated Text Shadow */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] font-serif font-black text-white tracking-tight leading-[1.12] mb-4 sm:mb-6 [text-shadow:_0_2px_16px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-[4rem] font-serif font-black text-white tracking-tight leading-[1.12] mb-3 sm:mb-5 [text-shadow:_0_2px_16px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]">
           Plan the celebration.{" "}
           <span className="block sm:inline font-normal italic text-[#FF7A60] [text-shadow:_0_2px_16px_rgba(0,0,0,0.85),_0_1px_3px_rgba(0,0,0,0.9)]">
             Not the chaos.
@@ -230,7 +230,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
         </h1>
 
         {/* Clear, Human-Centered Description within Sensible Max-Width */}
-        <p className="text-sm sm:text-base md:text-lg text-white/95 max-w-xl sm:max-w-2xl mx-auto leading-relaxed font-sans mb-7 sm:mb-9 [text-shadow:_0_1px_10px_rgba(0,0,0,0.9)]">
+        <p className="text-sm sm:text-base md:text-lg text-white/95 max-w-xl sm:max-w-2xl mx-auto leading-relaxed font-sans mb-6 sm:mb-8 [text-shadow:_0_1px_10px_rgba(0,0,0,0.9)]">
           From birthdays to weddings, turn your ideas, guest list, and budget into
           a celebration worth remembering — with a little help from AI.
         </p>
@@ -256,8 +256,8 @@ export function CelebrationHeroShowcase({ user }: Props) {
         </div>
       </div>
 
-      {/* 4. Minimal Discreet Slideshow Indicators */}
-      <div className="relative z-30 pb-4 sm:pb-6 flex items-center justify-center">
+      {/* 4. Minimal Discreet Slideshow Indicators (Positioned Absolutely at Bottom) */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-md border border-white/15 shadow-sm">
           {HERO_SLIDES.map((slide, idx) => {
             const isActive = idx === activeIndex;

@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* =========================================================================
+     LIGHT THEME (Warm Parchment, Warm Cream, Deep Aubergine, Dusty Coral, Champagne)
+     ========================================================================= */
+  --bg-page: #F6F0E8;
+  --surface-card: #FBF8F3;
+  --surface-elevated: #FFFFFF;
+  --text-primary: #342238;
+  --text-secondary: #56435A;
+  --text-muted: #786D76;
+  --border-subtle: #E5DDD1;
+  --border-focus: #342238;
+
+  --brand-coral: #D97768;
+  --brand-coral-hover: #C86455;
+  --brand-plum: #342238;
+  --brand-wine: #694451;
+  --brand-gold: #C6A66B;
+  --brand-gold-subtle: #D6B779;
+
+  --status-success: #2A7942;
+  --status-warning: #B45309;
+  --status-error: #C53030;
+}
+
+.dark {
+  /* =========================================================================
+     DARK THEME (Deep Aubergine Night, Muted Wine, Light Warm Text, Champagne)
+     ========================================================================= */
+  --bg-page: #161118;
+  --surface-card: #201923;
+  --surface-elevated: #2A212E;
+  --text-primary: #FAF6F8;
+  --text-secondary: #C7BBC9;
+  --text-muted: #9E92A0;
+  --border-subtle: #36293A;
+  --border-focus: #D97768;
+
+  --brand-coral: #D97768;
+  --brand-coral-hover: #E48E80;
+  --brand-plum: #342238;
+  --brand-wine: #694451;
+  --brand-gold: #C6A66B;
+  --brand-gold-subtle: #D6B779;
+
+  --status-success: #4ADE80;
+  --status-warning: #FBBF24;
+  --status-error: #F87171;
+}
+
+/* Atmospheric Atelier Background */
+.bg-atelier-parchment {
+  background-color: var(--bg-page);
+  background-image: 
+    radial-gradient(ellipse 75% 55% at 50% -5%, rgba(198, 166, 107, 0.14), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 90% 12%, rgba(217, 119, 104, 0.06), transparent 60%),
+    radial-gradient(ellipse 65% 50% at 10% 40%, rgba(105, 68, 81, 0.05), transparent 70%),
+    radial-gradient(circle at 50% 100%, rgba(52, 34, 56, 0.04), transparent 80%);
+  background-attachment: fixed;
+}
+
+.dark .bg-atelier-parchment {
+  background-color: #161118;
+  background-image: 
+    radial-gradient(ellipse 75% 55% at 50% -5%, rgba(198, 166, 107, 0.09), transparent 70%),
+    radial-gradient(ellipse 60% 45% at 90% 12%, rgba(217, 119, 104, 0.04), transparent 60%),
+    radial-gradient(ellipse 65% 50% at 10% 40%, rgba(105, 68, 81, 0.06), transparent 70%),
+    radial-gradient(circle at 50% 100%, rgba(14, 10, 16, 0.8), transparent 80%);
+  background-attachment: fixed;
+}
+
+/* Subtle Paper Grain Overlay */
+.atelier-grain {
+  position: relative;
+}
+
+.atelier-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.dark .atelier-grain::before {
+  opacity: 0.038;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Accessible focus styling */
+:focus-visible {
+  outline: 2px solid var(--brand-coral);
+  outline-offset: 2px;
+}
+
+/* Selection Color */
+::selection {
+  background-color: #D97768;
+  color: #FFFFFF;
+}
+
+/* Tabular figures for numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar suppression utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}

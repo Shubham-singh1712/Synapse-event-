@@ -63,7 +63,7 @@ export default function GoogleSignInButton({
       id="google-sign-in-btn"
       onClick={handleClick}
       disabled={disabled || isRedirecting}
-      className={`w-full h-12 px-4 rounded-xl font-semibold text-sm transition-all duration-200
+      className={`w-full h-10 sm:h-11 px-4 rounded-xl font-semibold text-sm transition-all duration-200
         flex items-center justify-center gap-3
         bg-surface text-primary border border-border
         hover:bg-surface-elevated hover:border-border/80 hover:shadow-soft

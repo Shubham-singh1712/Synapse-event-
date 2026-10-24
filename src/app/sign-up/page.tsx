@@ -103,22 +103,22 @@ function SignUpContent() {
   };
 
   return (
-    <div className="max-w-md mx-auto w-full py-10 space-y-7">
+    <div className="max-w-md mx-auto w-full my-auto py-2 sm:py-3 space-y-3 sm:space-y-3.5">
       {/* Header branding */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-champagne/15 border border-champagne/30 text-[11px] font-semibold text-secondary tracking-wide">
+      <div className="text-center space-y-1 sm:space-y-1.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-champagne/15 border border-champagne/30 text-[11px] font-semibold text-secondary tracking-wide">
           <Sparkles className="w-3.5 h-3.5 text-coral" />
           <span>Join SynapseEvent</span>
         </div>
-        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-primary tracking-tight">
+        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary tracking-tight">
           Create Your Account
         </h1>
-        <p className="text-sm text-muted">
+        <p className="text-xs sm:text-sm text-muted">
           Start curating celebrations with AI intelligence, precision budgets, and vendor timelines.
         </p>
 
         {validArchetype && (
-          <div className="mt-3 bg-coral/10 border border-coral/20 rounded-2xl py-2 px-3 text-xs text-center text-primary font-medium">
+          <div className="mt-2 bg-coral/10 border border-coral/20 rounded-xl py-1 px-3 text-xs text-center text-primary font-medium">
             Sign up to start planning your{" "}
             <span className="font-bold text-coral capitalize">{validArchetype.toLowerCase()}</span> celebration
           </div>
@@ -127,7 +127,7 @@ function SignUpContent() {
 
       {/* Google OAuth Configuration Notice */}
       {isGoogleUnconfigured && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs space-y-2 animate-in fade-in duration-200">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs space-y-1.5 animate-in fade-in duration-200">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
             <Settings className="w-4 h-4 shrink-0" />
             <span>Google OAuth Setup Required</span>
@@ -148,7 +148,7 @@ function SignUpContent() {
 
       {/* Database Unprovisioned Notice */}
       {isDbUnprovisioned && !isGoogleUnconfigured && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-xs space-y-2">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs space-y-1.5">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-semibold">
             <Database className="w-4 h-4 shrink-0" />
             <span>Database Persistence Unprovisioned</span>
@@ -168,36 +168,36 @@ function SignUpContent() {
 
       {/* General Error message */}
       {errorMsg && !isDbUnprovisioned && !isGoogleUnconfigured && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 text-xs text-red-600 dark:text-red-300 flex items-center gap-2.5">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs text-red-600 dark:text-red-300 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
           <span className="font-medium">{errorMsg}</span>
         </div>
       )}
 
       {/* Form Card */}
-      <div className="bg-surface border border-border rounded-3xl p-6 sm:p-8 shadow-soft transition-colors">
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-soft transition-colors">
         {/* 1. Google OAuth Option */}
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           <GoogleSignInButton
             text="Continue with Google"
             returnUrl={safeDestination !== "/dashboard" ? safeDestination : undefined}
           />
 
           {/* Visual Divider */}
-          <div className="relative flex items-center justify-center my-5">
+          <div className="relative flex items-center justify-center my-2.5 sm:my-3">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
-            <span className="relative bg-surface px-3 text-[11px] font-semibold tracking-wider text-muted uppercase">
+            <span className="relative bg-surface px-2.5 text-[10px] font-semibold tracking-wider text-muted uppercase">
               OR CONTINUE WITH EMAIL
             </span>
           </div>
         </div>
 
         {/* 2. Email & Password Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-secondary mb-1.5" htmlFor="name">
+            <label className="block text-xs font-semibold text-secondary mb-1" htmlFor="name">
               Full Name
             </label>
             <input
@@ -207,12 +207,12 @@ function SignUpContent() {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Clara Oswald"
               required
-              className="w-full bg-page border border-border rounded-xl px-3.5 py-2.5 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
+              className="w-full bg-page border border-border rounded-xl px-3 py-2 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-secondary mb-1.5" htmlFor="email">
+            <label className="block text-xs font-semibold text-secondary mb-1" htmlFor="email">
               Email Address
             </label>
             <input
@@ -222,12 +222,12 @@ function SignUpContent() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
               required
-              className="w-full bg-page border border-border rounded-xl px-3.5 py-2.5 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
+              className="w-full bg-page border border-border rounded-xl px-3 py-2 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-secondary mb-1.5" htmlFor="password">
+            <label className="block text-xs font-semibold text-secondary mb-1" htmlFor="password">
               Password (min. 8 characters)
             </label>
             <input
@@ -238,7 +238,7 @@ function SignUpContent() {
               placeholder="••••••••"
               minLength={8}
               required
-              className="w-full bg-page border border-border rounded-xl px-3.5 py-2.5 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
+              className="w-full bg-page border border-border rounded-xl px-3 py-2 text-sm text-primary placeholder:text-muted/60 focus:outline-none focus:border-coral focus:ring-1 focus:ring-coral transition"
             />
           </div>
 
@@ -246,7 +246,7 @@ function SignUpContent() {
             type="submit"
             id="sign-up-submit-btn"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-coral hover:bg-coral-hover disabled:opacity-50 text-white font-semibold text-sm shadow-coral transition flex items-center justify-center gap-2 mt-2"
+            className="w-full py-2.5 rounded-xl bg-coral hover:bg-coral-hover disabled:opacity-50 text-white font-semibold text-sm shadow-coral transition flex items-center justify-center gap-2 mt-1"
           >
             {isLoading ? (
               <span>Creating account...</span>
@@ -258,7 +258,7 @@ function SignUpContent() {
             )}
           </button>
 
-          <p className="text-center text-xs text-muted pt-2">
+          <p className="text-center text-xs text-muted pt-1">
             Already have an account?{" "}
             <Link
               href={buildAuthRedirectUrl(typeParam, returnUrlParam, "/sign-in")}
@@ -270,7 +270,7 @@ function SignUpContent() {
         </form>
       </div>
 
-      <div className="flex items-center justify-center gap-2 text-xs text-muted">
+      <div className="flex items-center justify-center gap-2 text-[11px] sm:text-xs text-muted pt-0.5">
         <ShieldCheck className="w-4 h-4 text-champagne" />
         <span>Encrypted passwords & isolated event workspaces</span>
       </div>
@@ -280,25 +280,25 @@ function SignUpContent() {
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen bg-page text-primary flex flex-col justify-between p-4 sm:p-8 transition-colors">
+    <div className="min-h-screen bg-page text-primary flex flex-col justify-between px-4 py-3 sm:px-6 sm:py-4 transition-colors">
       {/* Top Bar with brand & theme toggle */}
-      <div className="max-w-6xl mx-auto w-full flex items-center justify-between py-2">
+      <div className="max-w-5xl mx-auto w-full flex items-center justify-between py-1">
         <Link href="/" className="inline-flex items-center gap-2.5 group" aria-label="SynapseEvent Home">
-          <div className="w-9 h-9 rounded-xl bg-coral flex items-center justify-center text-white font-serif font-black shadow-sm group-hover:scale-105 transition">
+          <div className="w-8 h-8 rounded-xl bg-coral flex items-center justify-center text-white font-serif font-black shadow-sm group-hover:scale-105 transition text-base">
             S
           </div>
-          <span className="font-serif text-xl font-bold tracking-tight text-primary">
+          <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-primary">
             Synapse<span className="text-coral">Event</span>
           </span>
         </Link>
         <ThemeToggle />
       </div>
 
-      <Suspense fallback={<div className="max-w-md mx-auto w-full py-10 text-center text-muted text-sm">Loading sign-up...</div>}>
+      <Suspense fallback={<div className="max-w-md mx-auto w-full py-4 text-center text-muted text-sm">Loading sign-up...</div>}>
         <SignUpContent />
       </Suspense>
 
-      <footer className="text-center text-muted text-xs py-4 border-t border-border">
+      <footer className="text-center text-muted text-xs py-2 sm:py-2.5 border-t border-border mt-auto">
         SynapseEvent • Coordinated Celebration Architecture
       </footer>
     </div>

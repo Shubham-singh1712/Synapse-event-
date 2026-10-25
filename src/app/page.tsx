@@ -85,9 +85,9 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 3. Event Types Showcase (Weddings, Birthdays, Community Gatherings) */}
-        <section id="event-types" className="py-20 bg-surface border-y border-border">
+        <section id="event-types" className="py-12 sm:py-16 md:py-20 bg-surface border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="text-center max-w-xl mx-auto space-y-3 mb-14">
+            <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
               <span className="text-xs font-bold uppercase tracking-widest text-coral">
                 Tailored Event Archetypes
               </span>
@@ -247,8 +247,8 @@ export default async function PublicLandingPage() {
 
         {/* 4. Core Capabilities */}
         {/* 4. Thoughtfully Designed Features */}
-        <section id="capabilities" className="py-24 max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-xl mx-auto space-y-3 mb-16">
+        <section id="capabilities" className="py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-coral">
               Thoughtfully Designed Features
             </span>
@@ -324,9 +324,9 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 5. How It Works */}
-        <section id="how-it-works" className="py-20 bg-surface border-y border-border">
+        <section id="how-it-works" className="py-12 sm:py-16 md:py-20 bg-surface border-y border-border">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
-            <div className="text-center max-w-xl mx-auto space-y-3 mb-16">
+            <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
               <span className="text-xs font-bold uppercase tracking-widest text-coral">
                 Workflow
               </span>
@@ -373,8 +373,8 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 6. Studio Preview (Explicitly Labelled) */}
-        <section id="preview" className="py-24 max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-xl mx-auto space-y-3 mb-12">
+        <section id="preview" className="py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-xl mx-auto space-y-3 mb-8 sm:mb-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-surface border border-border text-secondary">
               <Sparkles className="w-3.5 h-3.5 text-coral" />
               Verified Studio Interface Preview
@@ -515,12 +515,12 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 7. Trust and Transparency */}
-        <section className="py-16 bg-surface border-y border-border">
+        <section className="py-8 sm:py-10 md:py-12 bg-surface border-y border-border">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
-            <div className="bg-page border border-border rounded-3xl p-6 sm:p-8 flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-coral shrink-0 mt-0.5" />
-              <div className="space-y-2 text-xs text-secondary">
-                <h3 className="font-serif font-bold text-primary text-base">
+            <div className="bg-page border border-border rounded-2xl sm:rounded-3xl p-5 sm:p-7 flex items-start gap-3.5 sm:gap-4 shadow-subtle">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-coral shrink-0 mt-0.5" />
+              <div className="space-y-2 text-xs sm:text-[13px] text-secondary">
+                <h3 className="font-serif font-bold text-primary text-base sm:text-lg">
                   Trust, Transparency &amp; Deterministic Integrity
                 </h3>
                 <p className="leading-relaxed">
@@ -540,29 +540,34 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 8. Final Call to Action */}
-        <section className="py-24 text-center max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
-          <h2 className="text-3xl sm:text-5xl font-serif font-black text-primary tracking-tight">
-            Ready to plan without the chaos?
-          </h2>
-          <p className="text-sm sm:text-base text-muted max-w-xl mx-auto">
-            Create your first celebration in less than two minutes. Generate an
-            integer-cents budget, connected timeline, and vendor checklist today.
-          </p>
-          <div className="pt-4">
-            <Link
-              href={user ? "/dashboard" : "/sign-up"}
-              id="footer-final-cta"
-              className="inline-flex items-center gap-2 px-9 py-4 rounded-2xl text-sm font-bold bg-coral hover:bg-coral-hover text-white shadow-coral transition-all transform hover:-translate-y-0.5"
-            >
-              {user ? "Go to Dashboard" : "Start Planning Now"}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+        <section className="py-12 sm:py-16 md:py-20 text-center max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="space-y-4 sm:space-y-5">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-serif font-black text-primary tracking-tight leading-tight">
+              Ready to plan without the chaos?
+            </h2>
+            <p className="text-sm sm:text-base text-muted max-w-xl mx-auto leading-relaxed">
+              Create your first celebration in less than two minutes. Generate an
+              integer-cents budget, connected timeline, and vendor checklist today.
+            </p>
+            <div className="pt-2 sm:pt-3">
+              <Link
+                href={user ? "/dashboard" : "/sign-up"}
+                id="footer-final-cta"
+                className="inline-flex items-center gap-2 px-8 sm:px-9 py-3.5 sm:py-4 rounded-2xl text-sm font-bold bg-coral hover:bg-coral-hover text-white shadow-coral transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              >
+                {user ? "Go to Dashboard" : "Start Planning Now"}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <p className="text-[11px] sm:text-xs text-muted pt-1">
+              Curated for weddings, birthdays &amp; community gatherings • Free to get started
+            </p>
           </div>
         </section>
       </main>
 
       {/* 9. Footer */}
-      <footer className="border-t border-border bg-surface py-12">
+      <footer className="border-t border-border bg-surface py-8 sm:py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-xl bg-coral flex items-center justify-center text-white font-serif font-bold text-xs">

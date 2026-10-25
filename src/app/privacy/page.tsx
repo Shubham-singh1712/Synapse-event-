@@ -34,10 +34,10 @@ export default async function PrivacyPage() {
     <div id="top" className="min-h-screen bg-page text-primary flex flex-col transition-colors duration-200">
       <PublicNavbar user={user} />
 
-      <main className="flex-1">
-        {/* Header Hero */}
-        <section className="py-12 sm:py-16 bg-surface border-b border-border">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-3">
+      <main className="flex-1 pb-16 sm:pb-24">
+        {/* Seamless Header Hero — One Continuous Background, No Harsh Boundary */}
+        <header className="pt-10 sm:pt-14 pb-6 sm:pb-8 text-center">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/15 border border-champagne/30 text-xs font-semibold text-secondary">
               <Shield className="w-3.5 h-3.5 text-coral" />
               <span>Data Protection &amp; Technical Disclosure</span>
@@ -45,15 +45,15 @@ export default async function PrivacyPage() {
             <h1 className="text-3xl sm:text-5xl font-serif font-black text-primary tracking-tight">
               Privacy Policy
             </h1>
-            <p className="text-sm text-muted max-w-xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-muted max-w-xl mx-auto leading-relaxed">
               Last updated: October 25, 2026 • A transparent, technical explanation of how SynapseEvent collects, processes, and protects your celebration data.
             </p>
           </div>
-        </section>
+        </header>
 
         {/* Centered Editorial Content Body */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-10 sm:space-y-12">
-          {/* Highlight Callout */}
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
+          {/* Highlight Callout — Distinct card surface with subtle border and soft shadow */}
           <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 flex items-start gap-4 shadow-subtle">
             <Lock className="w-5 h-5 text-coral shrink-0 mt-0.5" />
             <div className="space-y-1.5 text-xs sm:text-sm">

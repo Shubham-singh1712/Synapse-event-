@@ -37,10 +37,11 @@ export default function PublicNavbar({ user }: PublicNavbarProps) {
   }, [isMobileMenuOpen]);
 
   const navLinks = [
-    { label: "Event Types", href: "#event-types" },
-    { label: "Capabilities", href: "#capabilities" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Studio Preview", href: "#preview" },
+    { label: "Services", href: "/services" },
+    { label: "Event Types", href: "/#event-types" },
+    { label: "Capabilities", href: "/#capabilities" },
+    { label: "How It Works", href: "/#how-it-works" },
+    { label: "Studio Preview", href: "/#preview" },
   ];
 
   return (

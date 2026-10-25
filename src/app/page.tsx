@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth/auth-service";
 import PublicNavbar from "@/components/navigation/PublicNavbar";
+import PublicFooter from "@/components/navigation/PublicFooter";
 import { CelebrationHeroShowcase } from "@/components/landing/CelebrationHeroShowcase";
 
 export default async function PublicLandingPage() {
@@ -566,33 +567,8 @@ export default async function PublicLandingPage() {
         </section>
       </main>
 
-      {/* 9. Footer */}
-      <footer className="border-t border-border bg-surface py-8 sm:py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-coral flex items-center justify-center text-white font-serif font-bold text-xs">
-              S
-            </div>
-            <span className="font-serif font-bold text-primary text-sm">SynapseEvent</span>
-            <span>• Intelligent Celebration &amp; Event Planning Atelier</span>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <a href="#event-types" className="hover:text-primary transition-colors">
-              Event Types
-            </a>
-            <a href="#capabilities" className="hover:text-primary transition-colors">
-              Capabilities
-            </a>
-            <Link href="/sign-in" className="hover:text-primary transition-colors">
-              Sign In
-            </Link>
-            <Link href="/sign-up" className="hover:text-primary transition-colors">
-              Sign Up
-            </Link>
-          </div>
-        </div>
-      </footer>
+      {/* 9. Shared Public Footer */}
+      <PublicFooter />
     </div>
   );
 }

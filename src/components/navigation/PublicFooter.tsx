@@ -27,17 +27,12 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* Product & Services */}
+          {/* Event Archetypes */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-primary font-serif">
-              Platform &amp; Services
+              Event Archetypes
             </h4>
             <ul className="space-y-2 text-xs text-secondary">
-              <li>
-                <Link href="/services" className="hover:text-coral transition-colors">
-                  Overview of Services
-                </Link>
-              </li>
               <li>
                 <Link href="/#event-types" className="hover:text-coral transition-colors">
                   Weddings &amp; Sangeet
@@ -139,16 +134,12 @@ export default function PublicFooter() {
               <span>SynapseEvent • Deterministic Celebration Planning Atelier</span>
             </div>
             <div className="flex items-center gap-4 text-[11px]">
-              <Link href="/services" className="hover:text-primary transition-colors">
-                Services
-              </Link>
-              <span>•</span>
               <Link href="/terms" className="hover:text-primary transition-colors">
-                Terms
+                Terms of Service
               </Link>
               <span>•</span>
               <Link href="/privacy" className="hover:text-primary transition-colors">
-                Privacy
+                Privacy Policy
               </Link>
             </div>
           </div>

@@ -78,12 +78,12 @@ export default function NotFound() {
 
         {/* Helpful Alternate Pathways */}
         <div className="pt-6 border-t border-border flex items-center justify-center gap-6 text-xs text-muted">
-          <Link href="/services" className="hover:text-coral transition-colors">
-            Explore Services
-          </Link>
-          <span>•</span>
           <Link href="/#event-types" className="hover:text-coral transition-colors">
             Event Types
+          </Link>
+          <span>•</span>
+          <Link href="/#capabilities" className="hover:text-coral transition-colors">
+            Capabilities
           </Link>
           <span>•</span>
           <Link href="/sign-in" className="hover:text-coral transition-colors">

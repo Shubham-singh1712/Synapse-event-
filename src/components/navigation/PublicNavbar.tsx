@@ -37,7 +37,6 @@ export default function PublicNavbar({ user }: PublicNavbarProps) {
   }, [isMobileMenuOpen]);
 
   const navLinks = [
-    { label: "Services", href: "/services" },
     { label: "Event Types", href: "/#event-types" },
     { label: "Capabilities", href: "/#capabilities" },
     { label: "How It Works", href: "/#how-it-works" },

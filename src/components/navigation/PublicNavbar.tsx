@@ -41,6 +41,7 @@ export default function PublicNavbar({ user }: PublicNavbarProps) {
     { label: "Capabilities", href: "/#capabilities" },
     { label: "How It Works", href: "/#how-it-works" },
     { label: "Studio Preview", href: "/#preview" },
+    { label: "Services", href: "/services" },
   ];
 
   return (

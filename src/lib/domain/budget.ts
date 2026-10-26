@@ -1,6 +1,22 @@
 import { assertNonNegativeCents, formatCentsToCurrency } from "./money";
 import type { BudgetItemEntity } from "./schemas";
 
+export const CELEBRATION_CATEGORIES = [
+  "Venue & Mandap",
+  "Catering & Halwai",
+  "Decor & Floral",
+  "Photography & Video",
+  "Attire & Trousseau",
+  "Jewellery & Accessories",
+  "Entertainment & Music",
+  "Invitations & Gifts",
+  "Guest Transport & Logistics",
+  "Priest & Rituals",
+  "Production & Lighting",
+  "Hair & Makeup",
+  "Miscellaneous & Contingency",
+] as const;
+
 export interface CategorySubtotal {
   category: string;
   itemCount: number;

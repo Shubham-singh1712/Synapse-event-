@@ -97,7 +97,7 @@ export default async function PrivacyPage() {
           {/* Document Sections */}
           <div className="space-y-10 text-xs sm:text-sm text-secondary leading-relaxed">
             {/* 1. Overview */}
-            <section id="overview" className="scroll-mt-24 space-y-3 pt-6 border-t border-border/60">
+            <section id="overview" className="scroll-mt-24 space-y-3 pt-6">
               <h2 className="text-lg sm:text-xl font-serif font-bold text-primary">
                 1. Overview &amp; Commitment
               </h2>

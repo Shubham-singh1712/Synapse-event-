@@ -42,22 +42,8 @@ const LUXURY_PALETTE = [
   "#E11D48", // Crimson Rose
 ];
 
-// Familiar celebration planning categories (India-first & versatile)
-export const CELEBRATION_CATEGORIES = [
-  "Venue & Mandap",
-  "Catering & Halwai",
-  "Decor & Floral",
-  "Photography & Video",
-  "Attire & Trousseau",
-  "Jewellery & Accessories",
-  "Entertainment & Music",
-  "Invitations & Gifts",
-  "Guest Transport & Logistics",
-  "Priest & Rituals",
-  "Production & Lighting",
-  "Hair & Makeup",
-  "Miscellaneous & Contingency",
-];
+import { CELEBRATION_CATEGORIES } from "@/lib/domain/budget";
+export { CELEBRATION_CATEGORIES };
 
 interface BudgetLedgerTabProps {
   event: EventEntity;
@@ -724,7 +710,7 @@ export function BudgetLedgerTab({
         aria-label="Budget Overview"
         className="rounded-2xl p-6 sm:p-7 bg-surface/90 border border-border/80 shadow-subtle relative overflow-hidden"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center" role="region" aria-live="polite" aria-atomic="true">
           {/* Target Budget & Allocation Balance */}
           <div className="lg:col-span-5 space-y-2 border-b lg:border-b-0 lg:border-r border-border/80 pb-5 lg:pb-0 lg:pr-6">
             <span className="text-[10px] font-sans uppercase tracking-[0.2em] text-muted block">

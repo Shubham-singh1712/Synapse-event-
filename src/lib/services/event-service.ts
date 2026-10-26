@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   events,
@@ -383,24 +383,58 @@ export async function getUserEvents(
     return [];
   }
 
-  const summaries: UserEventSummaryItem[] = [];
+  if (eventRows.length === 0) {
+    return [];
+  }
 
-  for (const event of eventRows) {
-    const [bItems, milestones] = await Promise.all([
-      db.select({ estimatedCostCents: budgetItems.estimatedCostCents }).from(budgetItems).where(eq(budgetItems.eventId, event.id)),
-      db.select({ status: timelineMilestones.status }).from(timelineMilestones).where(eq(timelineMilestones.eventId, event.id)),
-    ]);
+  const eventIds = eventRows.map((e) => e.id);
 
-    const totalEstimatedCostCents = bItems.reduce((acc, b) => acc + (b.estimatedCostCents || 0), 0);
-    const completedMilestones = milestones.filter((m) => m.status === "COMPLETED").length;
+  // Batch query child records in parallel (2 constant-time batch queries instead of 2N per-event queries)
+  const [allBudgetItems, allMilestones] = await Promise.all([
+    db
+      .select({
+        eventId: budgetItems.eventId,
+        estimatedCostCents: budgetItems.estimatedCostCents,
+      })
+      .from(budgetItems)
+      .where(inArray(budgetItems.eventId, eventIds)),
+    db
+      .select({
+        eventId: timelineMilestones.eventId,
+        status: timelineMilestones.status,
+      })
+      .from(timelineMilestones)
+      .where(inArray(timelineMilestones.eventId, eventIds)),
+  ]);
 
-    // Days until event
-    const today = new Date().toISOString().split("T")[0]!;
+  // Aggregate budget estimates by eventId
+  const budgetTotalsByEvent = new Map<string, number>();
+  for (const b of allBudgetItems) {
+    const current = budgetTotalsByEvent.get(b.eventId) || 0;
+    budgetTotalsByEvent.set(b.eventId, current + (b.estimatedCostCents || 0));
+  }
+
+  // Aggregate milestone counts by eventId
+  const milestoneStatsByEvent = new Map<string, { total: number; completed: number }>();
+  for (const m of allMilestones) {
+    const stats = milestoneStatsByEvent.get(m.eventId) || { total: 0, completed: 0 };
+    stats.total += 1;
+    if (m.status === "COMPLETED") {
+      stats.completed += 1;
+    }
+    milestoneStatsByEvent.set(m.eventId, stats);
+  }
+
+  const today = new Date().toISOString().split("T")[0]!;
+  const todayTime = new Date(`${today}T00:00:00Z`).getTime();
+
+  return eventRows.map((event) => {
+    const totalEstimatedCostCents = budgetTotalsByEvent.get(event.id) || 0;
+    const mStats = milestoneStatsByEvent.get(event.id) || { total: 0, completed: 0 };
     const eventTime = new Date(`${event.eventDate}T00:00:00Z`).getTime();
-    const todayTime = new Date(`${today}T00:00:00Z`).getTime();
     const daysUntilEvent = Math.ceil((eventTime - todayTime) / 86400000);
 
-    summaries.push({
+    return {
       id: event.id,
       title: event.title,
       archetype: event.archetype as "WEDDING" | "BIRTHDAY" | "COMMUNITY",
@@ -410,14 +444,12 @@ export async function getUserEvents(
       totalBudgetCents: event.totalBudgetCents,
       totalEstimatedCostCents,
       currency: event.currency || "INR",
-      completedMilestones,
-      totalMilestones: milestones.length,
+      completedMilestones: mStats.completed,
+      totalMilestones: mStats.total,
       daysUntilEvent,
       createdAt: event.createdAt,
-    });
-  }
-
-  return summaries;
+    };
+  });
 }
 
 /**

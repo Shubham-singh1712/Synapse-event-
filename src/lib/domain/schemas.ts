@@ -353,3 +353,146 @@ export const EventPlanSchema = z.object({
   ideas: z.array(IdeaItemSchema),
 });
 export type EventPlan = z.infer<typeof EventPlanSchema>;
+
+// ==============================================================================
+// 8. EVENT WORKSPACE MUTATION & PATCH SCHEMAS
+// ==============================================================================
+
+export const UpdateEventDetailsPayloadSchema = z
+  .object({
+    action: z.literal("UPDATE_EVENT_DETAILS"),
+    updates: z
+      .object({
+        title: z.string().trim().min(1).max(120).optional(),
+        eventDate: z.string().optional(),
+        location: z.string().trim().max(200).optional(),
+        guestCount: z.number().int().min(0).max(MAX_GUESTS).optional(),
+        totalBudgetCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+        preferences: z.record(z.string(), z.unknown()).optional(),
+      })
+      .optional(),
+    title: z.string().trim().min(1).max(120).optional(),
+    eventDate: z.string().optional(),
+    location: z.string().trim().max(200).optional(),
+    guestCount: z.number().int().min(0).max(MAX_GUESTS).optional(),
+    totalBudgetCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+    preferences: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine(
+    (data) =>
+      data.updates !== undefined ||
+      data.title !== undefined ||
+      data.eventDate !== undefined ||
+      data.location !== undefined ||
+      data.guestCount !== undefined ||
+      data.totalBudgetCents !== undefined ||
+      data.preferences !== undefined,
+    { message: "At least one event detail update field must be provided." }
+  );
+
+export const AddBudgetItemPayloadSchema = z.object({
+  action: z.literal("ADD_BUDGET_ITEM"),
+  category: z.string().trim().max(50).default("General").optional(),
+  description: z.string().trim().min(1, "description is required").max(200),
+  estimatedCostCents: z
+    .number()
+    .int("estimatedCostCents must be an integer")
+    .min(0)
+    .max(MAX_BUDGET_CENTS),
+  actualCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+  status: BudgetItemStatusEnum.optional(),
+  isGuestSensitive: z.boolean().optional(),
+});
+
+export const UpdateBudgetItemPayloadSchema = z.object({
+  action: z.literal("UPDATE_BUDGET_ITEM"),
+  itemId: z.string().min(1, "itemId is required"),
+  category: z.string().trim().max(50).optional(),
+  description: z.string().trim().max(200).optional(),
+  estimatedCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+  actualCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+  status: BudgetItemStatusEnum.optional(),
+});
+
+export const DeleteBudgetItemPayloadSchema = z.object({
+  action: z.literal("DELETE_BUDGET_ITEM"),
+  itemId: z.string().min(1, "itemId is required"),
+});
+
+export const AddMilestonePayloadSchema = z.object({
+  action: z.literal("ADD_MILESTONE"),
+  title: z.string().trim().min(1, "title is required").max(150),
+  dueAt: z.string().min(1, "dueAt is required"),
+  description: z.string().trim().max(500).optional(),
+  offsetDaysFromEvent: z.number().int().optional(),
+});
+
+export const UpdateMilestonePayloadSchema = z.object({
+  action: z.literal("UPDATE_MILESTONE"),
+  milestoneId: z.string().min(1, "milestoneId is required"),
+  status: MilestoneStatusEnum.optional(),
+  title: z.string().trim().max(150).optional(),
+  description: z.string().trim().max(500).optional(),
+  dueAt: z.string().optional(),
+});
+
+export const DeleteMilestonePayloadSchema = z.object({
+  action: z.literal("DELETE_MILESTONE"),
+  milestoneId: z.string().min(1, "milestoneId is required"),
+});
+
+export const AddVendorTaskPayloadSchema = z.object({
+  action: z.literal("ADD_VENDOR_TASK"),
+  title: z.string().trim().min(1, "title is required").max(150),
+  category: z.string().trim().max(50).optional(),
+  requirements: z.string().trim().max(1000).optional(),
+  estimatedCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+});
+
+export const UpdateVendorTaskPayloadSchema = z.object({
+  action: z.literal("UPDATE_VENDOR_TASK"),
+  taskId: z.string().min(1, "taskId is required"),
+  status: VendorTaskStatusEnum.optional(),
+  requirements: z.string().trim().max(1000).optional(),
+  title: z.string().trim().max(150).optional(),
+  category: z.string().trim().max(50).optional(),
+  estimatedCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).nullable().optional(),
+});
+
+export const DeleteVendorTaskPayloadSchema = z.object({
+  action: z.literal("DELETE_VENDOR_TASK"),
+  taskId: z.string().min(1, "taskId is required"),
+});
+
+export const ConvertIdeaPayloadSchema = z.object({
+  action: z.literal("CONVERT_IDEA"),
+  ideaId: z.string().min(1, "ideaId is required"),
+  asType: z.enum(["BUDGET", "TASK", "BUDGET_ITEM", "MILESTONE", "VENDOR_TASK"]),
+});
+
+export const LegacyUpdateBudgetItemPayloadSchema = z.object({
+  action: z.undefined(),
+  itemId: z.string().min(1, "itemId is required"),
+  category: z.string().trim().max(50).optional(),
+  description: z.string().trim().max(200).optional(),
+  estimatedCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+  actualCostCents: z.number().int().min(0).max(MAX_BUDGET_CENTS).optional(),
+  status: BudgetItemStatusEnum.optional(),
+});
+
+export const PatchEventPayloadSchema = z.union([
+  UpdateEventDetailsPayloadSchema,
+  AddBudgetItemPayloadSchema,
+  UpdateBudgetItemPayloadSchema,
+  DeleteBudgetItemPayloadSchema,
+  AddMilestonePayloadSchema,
+  UpdateMilestonePayloadSchema,
+  DeleteMilestonePayloadSchema,
+  AddVendorTaskPayloadSchema,
+  UpdateVendorTaskPayloadSchema,
+  DeleteVendorTaskPayloadSchema,
+  ConvertIdeaPayloadSchema,
+  LegacyUpdateBudgetItemPayloadSchema,
+]);
+
+export type PatchEventPayload = z.infer<typeof PatchEventPayloadSchema>;

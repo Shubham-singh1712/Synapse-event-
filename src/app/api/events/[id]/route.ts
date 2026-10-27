@@ -17,6 +17,7 @@ import {
 import { getOrCreateWorkspaceSession } from "@/lib/auth/session-helper";
 import { UnauthorizedError } from "@/lib/auth/guest-workspace";
 import { DatabaseConfigurationError } from "@/lib/db/client";
+import { PatchEventPayloadSchema } from "@/lib/domain/schemas";
 
 export async function GET(
   req: NextRequest,
@@ -89,160 +90,165 @@ export async function PATCH(
       workspaceId: session.workspaceId,
       userId: session.user?.id,
     };
-    const body = await req.json();
-    const action = body.action;
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "INVALID_JSON", message: "Request body must be valid JSON." },
+        { status: 400 }
+      );
+    }
+
+    const parseResult = PatchEventPayloadSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          error: "VALIDATION_FAILED",
+          message: "Provided patch payload is invalid.",
+          fieldErrors: parseResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const payload = parseResult.data;
 
     try {
-      if (action === "UPDATE_EVENT_DETAILS") {
-        if (!body.updates || typeof body.updates !== "object") {
-          return NextResponse.json({ error: "INVALID_PAYLOAD", message: "updates object is required" }, { status: 400 });
-        }
-        const res = await updateEventDetails(eventId, body.updates, authContext);
+      if (payload.action === "UPDATE_EVENT_DETAILS") {
+        const detailsUpdates = payload.updates ?? {
+          title: payload.title,
+          eventDate: payload.eventDate,
+          location: payload.location,
+          guestCount: payload.guestCount,
+          totalBudgetCents: payload.totalBudgetCents,
+          preferences: payload.preferences,
+        };
+        const res = await updateEventDetails(eventId, detailsUpdates, authContext);
         return NextResponse.json({ success: true, event: res.event });
       }
 
-      if (action === "ADD_BUDGET_ITEM") {
+      if (payload.action === "ADD_BUDGET_ITEM") {
         const item = await addBudgetItem(
           eventId,
           {
-            category: body.category || "General",
-            description: body.description,
-            estimatedCostCents: body.estimatedCostCents,
-            actualCostCents: body.actualCostCents,
-            status: body.status,
-            isGuestSensitive: body.isGuestSensitive,
+            category: payload.category || "General",
+            description: payload.description,
+            estimatedCostCents: payload.estimatedCostCents,
+            actualCostCents: payload.actualCostCents,
+            status: payload.status,
+            isGuestSensitive: payload.isGuestSensitive,
           },
           authContext
         );
         return NextResponse.json({ success: true, item });
       }
 
-      if (action === "DELETE_BUDGET_ITEM") {
-        if (!body.itemId) {
-          return NextResponse.json({ error: "MISSING_ITEM_ID", message: "itemId is required" }, { status: 400 });
-        }
-        await deleteBudgetItem(eventId, body.itemId, authContext);
+      if (payload.action === "DELETE_BUDGET_ITEM") {
+        await deleteBudgetItem(eventId, payload.itemId, authContext);
         return NextResponse.json({ success: true });
       }
 
-      if (action === "ADD_MILESTONE") {
-        if (!body.title || !body.dueAt) {
-          return NextResponse.json({ error: "MISSING_FIELDS", message: "title and dueAt are required" }, { status: 400 });
-        }
+      if (payload.action === "ADD_MILESTONE") {
         const milestone = await addMilestone(
           eventId,
           {
-            title: body.title,
-            dueAt: body.dueAt,
-            description: body.description,
-            offsetDaysFromEvent: body.offsetDaysFromEvent,
+            title: payload.title,
+            dueAt: payload.dueAt,
+            description: payload.description,
+            offsetDaysFromEvent: payload.offsetDaysFromEvent,
           },
           authContext
         );
         return NextResponse.json({ success: true, milestone });
       }
 
-      if (action === "UPDATE_MILESTONE") {
-        if (!body.milestoneId) {
-          return NextResponse.json({ error: "MISSING_MILESTONE_ID", message: "milestoneId is required" }, { status: 400 });
-        }
+      if (payload.action === "UPDATE_MILESTONE") {
         const res = await updateMilestone(
           eventId,
-          body.milestoneId,
+          payload.milestoneId,
           {
-            status: body.status,
-            title: body.title,
-            description: body.description,
-            dueAt: body.dueAt,
+            status: payload.status,
+            title: payload.title,
+            description: payload.description,
+            dueAt: payload.dueAt,
           },
           authContext
         );
         return NextResponse.json({ success: true, milestone: res.milestone });
       }
 
-      if (action === "DELETE_MILESTONE") {
-        if (!body.milestoneId) {
-          return NextResponse.json({ error: "MISSING_MILESTONE_ID", message: "milestoneId is required" }, { status: 400 });
-        }
-        await deleteMilestone(eventId, body.milestoneId, authContext);
+      if (payload.action === "DELETE_MILESTONE") {
+        await deleteMilestone(eventId, payload.milestoneId, authContext);
         return NextResponse.json({ success: true });
       }
 
-      if (action === "ADD_VENDOR_TASK") {
-        if (!body.title) {
-          return NextResponse.json({ error: "MISSING_FIELDS", message: "title is required" }, { status: 400 });
-        }
+      if (payload.action === "ADD_VENDOR_TASK") {
         const task = await addVendorTask(
           eventId,
           {
-            category: body.category || "General",
-            title: body.title,
-            requirements: body.requirements,
-            estimatedCostCents: body.estimatedCostCents,
+            category: payload.category || "General",
+            title: payload.title,
+            requirements: payload.requirements,
+            estimatedCostCents: payload.estimatedCostCents,
           },
           authContext
         );
         return NextResponse.json({ success: true, task });
       }
 
-      if (action === "UPDATE_VENDOR_TASK") {
-        if (!body.taskId) {
-          return NextResponse.json({ error: "MISSING_TASK_ID", message: "taskId is required" }, { status: 400 });
-        }
+      if (payload.action === "UPDATE_VENDOR_TASK") {
         const res = await updateVendorTask(
           eventId,
-          body.taskId,
+          payload.taskId,
           {
-            status: body.status,
-            requirements: body.requirements,
-            title: body.title,
-            category: body.category,
-            estimatedCostCents: body.estimatedCostCents,
+            status: payload.status,
+            requirements: payload.requirements,
+            title: payload.title,
+            category: payload.category,
+            estimatedCostCents: payload.estimatedCostCents ?? undefined,
           },
           authContext
         );
         return NextResponse.json({ success: true, task: res.task });
       }
 
-      if (action === "DELETE_VENDOR_TASK") {
-        if (!body.taskId) {
-          return NextResponse.json({ error: "MISSING_TASK_ID", message: "taskId is required" }, { status: 400 });
-        }
-        await deleteVendorTask(eventId, body.taskId, authContext);
+      if (payload.action === "DELETE_VENDOR_TASK") {
+        await deleteVendorTask(eventId, payload.taskId, authContext);
         return NextResponse.json({ success: true });
       }
 
-      if (action === "CONVERT_IDEA") {
-        if (!body.ideaId || !body.asType) {
-          return NextResponse.json({ error: "MISSING_PARAMETERS", message: "ideaId and asType are required" }, { status: 400 });
-        }
-        const res = await convertIdeaToPlanItem(eventId, body.ideaId, body.asType, authContext);
+      if (payload.action === "CONVERT_IDEA") {
+        const normalizedType: "BUDGET" | "TASK" =
+          payload.asType === "TASK" || payload.asType === "VENDOR_TASK" || payload.asType === "MILESTONE"
+            ? "TASK"
+            : "BUDGET";
+        const res = await convertIdeaToPlanItem(eventId, payload.ideaId, normalizedType, authContext);
         return NextResponse.json({ success: true, createdId: res.createdId });
       }
 
       // Default: Update Budget Item (legacy or action = UPDATE_BUDGET_ITEM)
-      if (!body.itemId || typeof body.itemId !== "string") {
-        return NextResponse.json(
-          { error: "MISSING_ITEM_ID", message: "itemId is required in request body." },
-          { status: 400 }
-        );
-      }
-
       const result = await updateBudgetItem(
         eventId,
-        body.itemId,
+        payload.itemId,
         {
-          estimatedCostCents: body.estimatedCostCents,
-          actualCostCents: body.actualCostCents,
-          status: body.status,
-          description: body.description,
-          category: body.category,
+          estimatedCostCents: payload.estimatedCostCents,
+          actualCostCents: payload.actualCostCents,
+          status: payload.status,
+          description: payload.description,
+          category: payload.category,
         },
         authContext
       );
 
       return NextResponse.json({ success: true, updatedItem: result.updatedItem });
     } catch (dbError) {
+      if (dbError instanceof Error && dbError.message.toLowerCase().includes("not found")) {
+        return NextResponse.json(
+          { error: "NOT_FOUND", message: dbError.message },
+          { status: 404 }
+        );
+      }
       if (dbError instanceof UnauthorizedError) {
         return NextResponse.json(
           { error: "FORBIDDEN", message: "Access denied. Resource belongs to another workspace or account." },

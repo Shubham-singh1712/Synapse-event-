@@ -66,7 +66,7 @@ export const CURATED_INSPIRATION_THEMES: InspirationTheme[] = [
     whyItFits:
       "Gentle pastel tones photograph beautifully without overwhelming baby or grandparents, creating serene heirloom portraits.",
     heroImage:
-      "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80",
     heroAlt: "Pastel floral tablescape with soft macaron and flower decor",
     galleryImages: [
       {
@@ -384,7 +384,7 @@ export const CURATED_INSPIRATION_THEMES: InspirationTheme[] = [
         caption: "Individual eggless dessert shooters: Belgian chocolate & mango passionfruit",
       },
       {
-        url: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=800&q=80",
+        url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
         alt: "Dessert table centerpiece with floral bouquets",
         caption: "Elevated acrylic cake plinth with fairy light under-glow",
       },
@@ -645,7 +645,7 @@ export function adaptDbIdeasToInspiration(
     const heroImage =
       matchingCurated?.heroImage ||
       (index % 2 === 0
-        ? "https://images.unsplash.com/photo-1535141192574-5d4897c13136?auto=format&fit=crop&w=1200&q=80"
+        ? "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=80"
         : "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1200&q=80");
 
     const colorPalette: ColorSwatch[] = matchingCurated?.colorPalette || [

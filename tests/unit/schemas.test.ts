@@ -5,6 +5,7 @@ import {
   BudgetItemSchema,
   TimelineMilestoneSchema,
   VendorTaskSchema,
+  PatchEventPayloadSchema,
   MAX_GUESTS,
   MAX_BUDGET_CENTS,
 } from "@/lib/domain/schemas";
@@ -120,5 +121,100 @@ describe("Domain Schema Contracts & Runtime Validation", () => {
     // TypeScript & Zod omit verify that id and workspaceId are not in CreateEventInput
     expect((parsed as Record<string, unknown>).workspaceId).toBeUndefined();
     expect((parsed as Record<string, unknown>).id).toBeUndefined();
+  });
+
+  // 34. PatchEventPayloadSchema validation
+  it("34. validates valid and invalid PATCH payloads across all event mutation actions", () => {
+    // Valid UPDATE_EVENT_DETAILS with updates object
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "UPDATE_EVENT_DETAILS",
+        updates: { title: "New Title", guestCount: 150 },
+      }).success
+    ).toBe(true);
+
+    // Valid UPDATE_EVENT_DETAILS with top-level fields
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "UPDATE_EVENT_DETAILS",
+        title: "Top-Level Title",
+        totalBudgetCents: 5000000,
+      }).success
+    ).toBe(true);
+
+    // Invalid UPDATE_EVENT_DETAILS with no fields
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "UPDATE_EVENT_DETAILS",
+      }).success
+    ).toBe(false);
+
+    // Valid ADD_BUDGET_ITEM
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "ADD_BUDGET_ITEM",
+        category: "Catering",
+        description: "Artisan Buffet",
+        estimatedCostCents: 150000,
+      }).success
+    ).toBe(true);
+
+    // Invalid ADD_BUDGET_ITEM (missing description, negative cost)
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "ADD_BUDGET_ITEM",
+        category: "Catering",
+        estimatedCostCents: -50,
+      }).success
+    ).toBe(false);
+
+    // Valid UPDATE_BUDGET_ITEM
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "UPDATE_BUDGET_ITEM",
+        itemId: "b1111111-1111-4111-a111-111111111111",
+        estimatedCostCents: 200000,
+      }).success
+    ).toBe(true);
+
+    // Valid Legacy budget item update (no action specified)
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        itemId: "b1111111-1111-4111-a111-111111111111",
+        actualCostCents: 190000,
+      }).success
+    ).toBe(true);
+
+    // Valid ADD_MILESTONE & DELETE_MILESTONE
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "ADD_MILESTONE",
+        title: "Book Venue",
+        dueAt: "2026-11-01",
+      }).success
+    ).toBe(true);
+
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "DELETE_MILESTONE",
+        milestoneId: "m1111111-1111-4111-a111-111111111111",
+      }).success
+    ).toBe(true);
+
+    // Valid CONVERT_IDEA
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "CONVERT_IDEA",
+        ideaId: "idea-123",
+        asType: "BUDGET",
+      }).success
+    ).toBe(true);
+
+    // Invalid unknown action
+    expect(
+      PatchEventPayloadSchema.safeParse({
+        action: "DROP_DATABASE",
+      }).success
+    ).toBe(false);
   });
 });

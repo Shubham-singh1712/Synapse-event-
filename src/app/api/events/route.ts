@@ -44,7 +44,15 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "INVALID_JSON", message: "Request body must be valid JSON." },
+        { status: 400 }
+      );
+    }
 
     // 1. Validate payload against Zod schema
     const parseResult = CreateEventInputSchema.safeParse(body);

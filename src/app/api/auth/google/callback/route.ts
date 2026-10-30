@@ -71,13 +71,21 @@ export async function GET(req: NextRequest) {
     // 7. Establish or link database user account and session
     const { sessionToken } = await linkOrCreateGoogleUserAndSession(profile);
 
-    // 8. Establish session cookie
-    await setAuthSessionCookie(sessionToken);
-
-    // 9. Redirect to target return URL or dashboard on success
+    // 8. Establish session cookie directly on the destination redirect response
     const targetPath = stateResult.returnUrl || "/dashboard";
     const destinationUrl = new URL(targetPath, req.url);
-    return NextResponse.redirect(destinationUrl);
+    const redirectResponse = NextResponse.redirect(destinationUrl);
+    const isProduction = process.env.NODE_ENV === "production";
+
+    redirectResponse.cookies.set("synapse_auth_session", sessionToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+
+    return redirectResponse;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("[Google OAuth Callback Error]:", errorMsg);

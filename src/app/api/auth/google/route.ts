@@ -50,7 +50,20 @@ export async function GET(req: NextRequest) {
     state,
   });
 
-  return NextResponse.redirect(authUrl);
+  const response = NextResponse.redirect(authUrl);
+  const isProduction = process.env.NODE_ENV === "production";
+  const safeReturn = targetReturnUrl ? sanitizeRedirectPath(targetReturnUrl) : "";
+  const cookieValue = `${state}|${redirectUri || ""}|${safeReturn}`;
+
+  response.cookies.set("synapse_oauth_state", cookieValue, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+
+  return response;
 }
 
 export async function POST(req: NextRequest) {

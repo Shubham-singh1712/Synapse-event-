@@ -79,13 +79,24 @@ export async function GET(req: NextRequest) {
     const destinationUrl = new URL(targetPath, req.url);
     return NextResponse.redirect(destinationUrl);
   } catch (error) {
-    console.error("[Google OAuth Callback Error]:", error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error("[Google OAuth Callback Error]:", errorMsg);
     if (error instanceof DatabaseConfigurationError) {
       signInUrl.searchParams.set("error", "DATABASE_UNCONFIGURED");
       return NextResponse.redirect(signInUrl);
     }
 
+    // Attach specific diagnostic reason (sanitized) to help diagnose provider rejections
     signInUrl.searchParams.set("error", "GOOGLE_AUTH_FAILED");
+    if (errorMsg.includes("invalid_grant")) {
+      signInUrl.searchParams.set("reason", "CODE_EXPIRED_OR_ALREADY_USED");
+    } else if (errorMsg.includes("redirect_uri_mismatch")) {
+      signInUrl.searchParams.set("reason", "REDIRECT_URI_MISMATCH");
+    } else if (errorMsg.includes("invalid_client")) {
+      signInUrl.searchParams.set("reason", "INVALID_CLIENT_SECRET");
+    } else {
+      signInUrl.searchParams.set("reason", encodeURIComponent(errorMsg.slice(0, 100)));
+    }
     return NextResponse.redirect(signInUrl);
   }
 }

@@ -49,7 +49,12 @@ function SignUpContent() {
     } else if (errorParam === "GOOGLE_AUTH_STATE_MISMATCH") {
       setErrorMsg("Security validation expired or state mismatched. Please try signing up again.");
     } else if (errorParam === "GOOGLE_AUTH_FAILED") {
-      setErrorMsg("Unable to complete Google authentication. Please try again or use email sign-up.");
+      const reason = searchParams.get("reason");
+      setErrorMsg(
+        reason
+          ? `Google authentication could not be completed (${decodeURIComponent(reason)}). Please try again or use email sign-up.`
+          : "Unable to complete Google authentication. Please try again or use email sign-up."
+      );
     } else if (errorParam === "DATABASE_UNCONFIGURED") {
       setIsDbUnprovisioned(true);
       setErrorMsg("Database persistence is in unprovisioned mode. Please configure DATABASE_URL in .env.local.");

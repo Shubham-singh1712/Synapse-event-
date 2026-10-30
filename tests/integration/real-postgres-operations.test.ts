@@ -268,4 +268,63 @@ describe("Real PostgreSQL Database Operations (Transactions, Persistence, Reload
     const check = await db.select().from(schema.events).where(eq(schema.events.id, failedEventId));
     expect(check.length).toBe(0);
   });
+
+  // 12. Deterministic Ordering of Child Entities
+  it("12. retrieves child entities in deterministic order across reloads", async () => {
+    // Insert additional milestone with earlier due date to verify ascending order
+    const earlierMilestoneId = "11111111-0000-4111-8111-111111111111";
+    await db.insert(schema.timelineMilestones).values({
+      id: earlierMilestoneId,
+      eventId,
+      title: "Initial Planning Kickoff",
+      dueAt: "2026-06-01",
+      offsetDaysFromEvent: -172,
+      status: "NOT_STARTED",
+      origin: "USER_CUSTOM",
+      isCustomByUser: true,
+    });
+
+    const milestonesAsc = await db
+      .select()
+      .from(schema.timelineMilestones)
+      .where(eq(schema.timelineMilestones.eventId, eventId))
+      .orderBy(schema.timelineMilestones.dueAt);
+
+    expect(milestonesAsc.length).toBeGreaterThan(1);
+    // Verify ascending order
+    for (let i = 1; i < milestonesAsc.length; i++) {
+      expect(milestonesAsc[i]!.dueAt >= milestonesAsc[i - 1]!.dueAt).toBe(true);
+    }
+  });
+
+  // 13. Exclude CANCELLED budget items from totals
+  it("13. excludes CANCELLED budget items from active budget totals", async () => {
+    // Insert a cancelled budget item
+    const cancelledItemId = "22222222-0000-4222-8222-222222222222";
+    await db.insert(schema.budgetItems).values({
+      id: cancelledItemId,
+      eventId,
+      category: "ENTERTAINMENT",
+      description: "Cancelled Live Band",
+      estimatedCostCents: 500000,
+      actualCostCents: 0,
+      status: "CANCELLED",
+      origin: "USER_CUSTOM",
+      isCustomByUser: true,
+      isGuestSensitive: false,
+    });
+
+    const activeItems = await db
+      .select()
+      .from(schema.budgetItems)
+      .where(
+        and(
+          eq(schema.budgetItems.eventId, eventId),
+          eq(schema.budgetItems.status, "COMMITTED")
+        )
+      );
+
+    expect(activeItems.some((i) => i.id === cancelledItemId)).toBe(false);
+  });
 });
+

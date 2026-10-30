@@ -8,6 +8,8 @@ import {
   type CopilotProposedAction,
 } from "@/lib/domain/copilot-contracts";
 import { DEFAULT_GEMINI_MODEL, AI_REQUEST_TIMEOUT_MS } from "./adapter";
+import { calculateBudgetSummary } from "@/lib/domain/budget";
+import { calculateTimelineSummary } from "@/lib/domain/timeline";
 
 export type CopilotIntent =
   | "NEW_ACTIVITY_BUDGET"
@@ -197,7 +199,13 @@ export function buildEventGroundingContext(
 ): {
   summaryString: string;
 } {
-  const { event, budgetItems, milestones, vendorTasks: _vendorTasks, budgetSummary, timelineSummary } = plan;
+  const event = plan.event;
+  const budgetItems = plan.budgetItems || [];
+  const milestones = plan.milestones || [];
+  const budgetSummary =
+    plan.budgetSummary || calculateBudgetSummary(event.totalBudgetCents, event.guestCount, budgetItems);
+  const timelineSummary =
+    plan.timelineSummary || calculateTimelineSummary(event.eventDate, milestones);
 
   // Focused context for New Activity inquiries
   if (intent === "NEW_ACTIVITY_BUDGET" || intent === "FOLLOW_UP_REFINEMENT") {
@@ -291,7 +299,13 @@ export function generateDeterministicCopilotAdvice(
   request: CopilotChatRequest
 ): CopilotChatResponse {
   const startTime = Date.now();
-  const { event, budgetItems, milestones, budgetSummary, timelineSummary } = plan;
+  const event = plan.event;
+  const budgetItems = plan.budgetItems || [];
+  const milestones = plan.milestones || [];
+  const budgetSummary =
+    plan.budgetSummary || calculateBudgetSummary(event.totalBudgetCents, event.guestCount, budgetItems);
+  const timelineSummary =
+    plan.timelineSummary || calculateTimelineSummary(event.eventDate, milestones);
   const currency = event.currency || "INR";
   const { intent, extractedCount } = classifyCopilotIntent(request.message, request.history);
 
@@ -686,9 +700,13 @@ CONVERSATION HISTORY:
 ${(request.history || []).map((h) => `${h.role}: ${h.content}`).join("\n")}
 `.trim();
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("AI_PROVIDER_TIMEOUT")), AI_REQUEST_TIMEOUT_MS)
-    );
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error("AI_PROVIDER_TIMEOUT"));
+      }, AI_REQUEST_TIMEOUT_MS);
+    });
 
     const callPromise = ai.models.generateContent({
       model,
@@ -704,8 +722,20 @@ ${(request.history || []).map((h) => `${h.role}: ${h.content}`).join("\n")}
       },
     });
 
-    const response = await Promise.race([callPromise, timeoutPromise]);
+    // Suppress late unhandled rejections if callPromise rejects after timeout
+    callPromise.catch(() => {});
+
+    let response;
+    try {
+      response = await Promise.race([callPromise, timeoutPromise]);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
+
     const responseText = response.text;
+
 
     if (!responseText || responseText.trim().length === 0) {
       throw new Error("EMPTY_AI_RESPONSE");

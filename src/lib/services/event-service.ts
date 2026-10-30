@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import {
   events,
@@ -241,12 +241,12 @@ export async function getEventWithPlan(
     authContext
   );
 
-  // 3. Fetch related records
+  // 3. Fetch related records with deterministic ordering
   const [bRows, mRows, vRows, iRows] = await Promise.all([
-    db.select().from(budgetItems).where(eq(budgetItems.eventId, eventId)),
-    db.select().from(timelineMilestones).where(eq(timelineMilestones.eventId, eventId)),
-    db.select().from(vendorTasks).where(eq(vendorTasks.eventId, eventId)),
-    db.select().from(ideaItems).where(eq(ideaItems.eventId, eventId)),
+    db.select().from(budgetItems).where(eq(budgetItems.eventId, eventId)).orderBy(asc(budgetItems.createdAt)),
+    db.select().from(timelineMilestones).where(eq(timelineMilestones.eventId, eventId)).orderBy(asc(timelineMilestones.dueAt)),
+    db.select().from(vendorTasks).where(eq(vendorTasks.eventId, eventId)).orderBy(asc(vendorTasks.createdAt)),
+    db.select().from(ideaItems).where(eq(ideaItems.eventId, eventId)).orderBy(asc(ideaItems.createdAt)),
   ]);
 
   const parsedEvent: EventEntity = {
@@ -394,6 +394,7 @@ export async function getUserEvents(
     db
       .select({
         eventId: budgetItems.eventId,
+        status: budgetItems.status,
         estimatedCostCents: budgetItems.estimatedCostCents,
       })
       .from(budgetItems)
@@ -407,9 +408,12 @@ export async function getUserEvents(
       .where(inArray(timelineMilestones.eventId, eventIds)),
   ]);
 
-  // Aggregate budget estimates by eventId
+  // Aggregate budget estimates by eventId (excluding CANCELLED items to mirror domain rules)
   const budgetTotalsByEvent = new Map<string, number>();
   for (const b of allBudgetItems) {
+    if (b.status === "CANCELLED") {
+      continue;
+    }
     const current = budgetTotalsByEvent.get(b.eventId) || 0;
     budgetTotalsByEvent.set(b.eventId, current + (b.estimatedCostCents || 0));
   }

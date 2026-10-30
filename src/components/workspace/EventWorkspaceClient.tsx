@@ -52,12 +52,68 @@ import type {
   TimelineMilestoneEntity,
   VendorTaskEntity,
 } from "@/lib/domain/schemas";
+import dynamic from "next/dynamic";
 import ThemeToggle from "@/components/theme/ThemeToggle";
-import { BudgetLedgerTab } from "./BudgetLedgerTab";
-import { PlanChecklistTab } from "./PlanChecklistTab";
-import { VendorsBookingsTab } from "./VendorsBookingsTab";
-import { InspirationStudioTab } from "./InspirationStudioTab";
-import { CelebrationCopilotDrawer } from "./CelebrationCopilotDrawer";
+
+function TabLoadingSkeleton({ title }: { title: string }) {
+  return (
+    <div
+      role="status"
+      aria-label={`Loading ${title}...`}
+      aria-busy="true"
+      className="w-full min-h-[420px] p-6 sm:p-8 rounded-2xl bg-card border border-border/40 animate-pulse flex flex-col gap-6"
+    >
+      <div className="flex items-center justify-between">
+        <div className="h-8 w-48 bg-muted/70 rounded-lg" />
+        <div className="h-9 w-32 bg-muted/50 rounded-lg" />
+      </div>
+      <div className="h-4 w-72 bg-muted/40 rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+        <div className="h-28 bg-muted/30 rounded-xl" />
+        <div className="h-28 bg-muted/30 rounded-xl" />
+        <div className="h-28 bg-muted/30 rounded-xl" />
+      </div>
+      <div className="h-64 bg-muted/20 rounded-xl" />
+      <span className="sr-only">Loading {title}...</span>
+    </div>
+  );
+}
+
+const BudgetLedgerTab = dynamic(
+  () => import("./BudgetLedgerTab").then((m) => m.BudgetLedgerTab),
+  {
+    loading: () => <TabLoadingSkeleton title="budget ledger" />,
+  }
+);
+
+const PlanChecklistTab = dynamic(
+  () => import("./PlanChecklistTab").then((m) => m.PlanChecklistTab),
+  {
+    loading: () => <TabLoadingSkeleton title="plan and checklist" />,
+  }
+);
+
+const VendorsBookingsTab = dynamic(
+  () => import("./VendorsBookingsTab").then((m) => m.VendorsBookingsTab),
+  {
+    loading: () => <TabLoadingSkeleton title="vendors and bookings" />,
+  }
+);
+
+const InspirationStudioTab = dynamic(
+  () => import("./InspirationStudioTab").then((m) => m.InspirationStudioTab),
+  {
+    loading: () => <TabLoadingSkeleton title="inspiration studio" />,
+  }
+);
+
+const CelebrationCopilotDrawer = dynamic(
+  () => import("./CelebrationCopilotDrawer").then((m) => m.CelebrationCopilotDrawer),
+  {
+    loading: () => null,
+  }
+);
+
 
 interface Props {
   initialPlan: CompleteEventPlan;

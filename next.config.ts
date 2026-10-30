@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["postgres", "@electric-sql/pglite"],
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",

@@ -1,18 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signInUser, setAuthSessionCookie, AuthenticationError } from "@/lib/auth/auth-service";
 import { DatabaseConfigurationError } from "@/lib/db/client";
+import { SignInPayloadSchema } from "@/lib/domain/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
       return NextResponse.json(
-        { error: "VALIDATION_ERROR", message: "Email and password are required." },
+        { error: "INVALID_JSON", message: "Request body must be valid JSON." },
         { status: 400 }
       );
     }
+
+    const parseResult = SignInPayloadSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues[0]?.message || "Email and password are required.";
+      return NextResponse.json(
+        {
+          error: "VALIDATION_ERROR",
+          message: firstIssue,
+          fieldErrors: parseResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = parseResult.data;
 
     try {
       const result = await signInUser({ email, password });
@@ -46,3 +62,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "SERVER_ERROR", message }, { status: 500 });
   }
 }
+

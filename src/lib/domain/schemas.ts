@@ -496,3 +496,20 @@ export const PatchEventPayloadSchema = z.union([
 ]);
 
 export type PatchEventPayload = z.infer<typeof PatchEventPayloadSchema>;
+
+// ==============================================================================
+// AUTHENTICATION SCHEMAS
+// ==============================================================================
+
+export const SignInPayloadSchema = z.object({
+  email: z.string().trim().email("Please provide a valid email address."),
+  password: z.string().min(1, "Password is required."),
+});
+export type SignInPayload = z.infer<typeof SignInPayloadSchema>;
+
+export const SignUpPayloadSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
+  email: z.string().trim().email("Please provide a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters long."),
+});
+export type SignUpPayload = z.infer<typeof SignUpPayloadSchema>;

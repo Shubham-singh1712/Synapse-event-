@@ -26,9 +26,19 @@ export async function POST(
       userId: session.user?.id,
     };
 
-    // 2. Validate request body against schema
-    const body = await req.json();
-    const parseResult = CopilotChatRequestSchema.safeParse(body);
+    // 2. Safely parse JSON request body
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "INVALID_JSON", message: "Request body must be valid JSON." },
+        { status: 400 }
+      );
+    }
+
+    // 3. Validate request body against schema
+    const parseResult = CopilotChatRequestSchema.safeParse(rawBody);
     if (!parseResult.success) {
       return NextResponse.json(
         {
@@ -39,6 +49,7 @@ export async function POST(
         { status: 400 }
       );
     }
+
 
     // 3. Retrieve event plan enforcing ownership
     try {

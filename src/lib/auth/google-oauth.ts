@@ -259,6 +259,8 @@ export async function fetchGoogleUserProfile(accessToken: string): Promise<Googl
 export async function linkOrCreateGoogleUserAndSession(
   profile: GoogleUserProfile
 ): Promise<{ user: AuthenticatedUser; sessionToken: string }> {
+  const { ensureDbReady } = await import("@/lib/db/client");
+  await ensureDbReady();
   const db = getDb();
   const email = profile.email.toLowerCase();
 

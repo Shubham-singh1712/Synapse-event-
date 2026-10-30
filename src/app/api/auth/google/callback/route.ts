@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
     const destinationUrl = new URL(targetPath, req.url);
     return NextResponse.redirect(destinationUrl);
   } catch (error) {
+    console.error("[Google OAuth Callback Error]:", error);
     if (error instanceof DatabaseConfigurationError) {
       signInUrl.searchParams.set("error", "DATABASE_UNCONFIGURED");
       return NextResponse.redirect(signInUrl);

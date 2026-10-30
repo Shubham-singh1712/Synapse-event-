@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { eq, and, gt } from "drizzle-orm";
-import { getDb } from "@/lib/db/client";
+import { getDb, ensureDbReady } from "@/lib/db/client";
 import { users, sessions } from "@/lib/db/schema";
 import { cookies } from "next/headers";
 
@@ -65,6 +65,7 @@ export async function signUpUser(params: {
   email: string;
   password: string;
 }): Promise<{ user: AuthenticatedUser; sessionToken: string }> {
+  await ensureDbReady();
   const db = getDb();
   const email = params.email.trim().toLowerCase();
   const name = params.name.trim();
@@ -134,6 +135,7 @@ export async function signInUser(params: {
   email: string;
   password: string;
 }): Promise<{ user: AuthenticatedUser; sessionToken: string }> {
+  await ensureDbReady();
   const db = getDb();
   const email = params.email.trim().toLowerCase();
 
@@ -178,6 +180,7 @@ export async function validateSessionToken(
   if (!sessionToken || sessionToken.trim().length === 0) return null;
 
   try {
+    await ensureDbReady();
     const db = getDb();
     const rows = await db
       .select({

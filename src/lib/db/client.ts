@@ -15,37 +15,37 @@ export class DatabaseConfigurationError extends Error {
   }
 }
 
-// Global singletons across development hot reloads
 declare global {
   var __synapse_db__: ReturnType<typeof drizzlePostgres<typeof schema>> | undefined;
   var __synapse_sql__: ReturnType<typeof postgres> | undefined;
   var __synapse_pglite__: PGlite | undefined;
   var __synapse_migrated__: boolean | undefined;
+  var __synapse_migration_promise__: Promise<void> | undefined;
 }
 
 /**
  * Executes initial SQL migrations for the embedded local PGlite database.
  */
-function runEmbeddedMigrationsSync(pglite: PGlite): void {
+export async function ensureEmbeddedMigrations(pglite: PGlite): Promise<void> {
   if (globalThis.__synapse_migrated__) {
     return;
   }
-
-  // Queue initial migration scripts in PGlite
-  const migrationsDir = path.resolve(process.cwd(), "src/lib/db/migrations");
-  if (!fs.existsSync(migrationsDir)) {
-    return;
+  if (globalThis.__synapse_migration_promise__) {
+    return globalThis.__synapse_migration_promise__;
   }
 
-  const migrationFiles = fs
-    .readdirSync(migrationsDir)
-    .filter((file) => file.endsWith(".sql"))
-    .sort();
-
-  // Execute each migration file sequentially
-  (async () => {
+  globalThis.__synapse_migration_promise__ = (async () => {
     try {
-      // Check if users table already exists to avoid re-running migrations
+      const migrationsDir = path.resolve(process.cwd(), "src/lib/db/migrations");
+      if (!fs.existsSync(migrationsDir)) {
+        return;
+      }
+
+      const migrationFiles = fs
+        .readdirSync(migrationsDir)
+        .filter((file) => file.endsWith(".sql"))
+        .sort();
+
       const check = await pglite.query<{ table_name: string }>(
         "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users';"
       );
@@ -67,6 +67,8 @@ function runEmbeddedMigrationsSync(pglite: PGlite): void {
       console.error("[PGlite Embedded Migration Error]:", err);
     }
   })();
+
+  return globalThis.__synapse_migration_promise__;
 }
 
 export type AppDatabase = ReturnType<typeof drizzlePostgres<typeof schema>>;
@@ -123,12 +125,22 @@ export function getDb(): AppDatabase {
 
   if (!globalThis.__synapse_pglite__) {
     globalThis.__synapse_pglite__ = new PGlite(dataDir);
-    runEmbeddedMigrationsSync(globalThis.__synapse_pglite__);
+    ensureEmbeddedMigrations(globalThis.__synapse_pglite__);
   }
 
   const db = drizzlePglite(globalThis.__synapse_pglite__, { schema }) as unknown as AppDatabase;
   globalThis.__synapse_db__ = db;
   return db;
+}
+
+/**
+ * Ensures embedded migrations have finished executing before queries run.
+ */
+export async function ensureDbReady(): Promise<void> {
+  getDb();
+  if (globalThis.__synapse_pglite__) {
+    await ensureEmbeddedMigrations(globalThis.__synapse_pglite__);
+  }
 }
 
 /**

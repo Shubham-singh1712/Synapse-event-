@@ -47,7 +47,12 @@ function SignInContent() {
     } else if (errorParam === "GOOGLE_AUTH_CANCELLED") {
       setErrorMsg("Google sign-in was cancelled or access was denied.");
     } else if (errorParam === "GOOGLE_AUTH_STATE_MISMATCH") {
-      setErrorMsg("Security validation expired or state mismatched. Please try signing in again.");
+      const reason = searchParams.get("reason");
+      setErrorMsg(
+        reason
+          ? `Security validation expired or state cookie was missing (${decodeURIComponent(reason)}). Please check third-party cookie settings or try signing in again.`
+          : "Security validation expired or state mismatched. Please try signing in again."
+      );
     } else if (errorParam === "GOOGLE_AUTH_FAILED") {
       const reason = searchParams.get("reason");
       setErrorMsg(

@@ -43,7 +43,18 @@ export async function GET(req: NextRequest) {
 
   // 3. Validate presence of code and state validation outcome
   if (!code || !state || !stateResult.valid) {
-    signInUrl.searchParams.set("error", !stateResult.valid ? "GOOGLE_AUTH_STATE_MISMATCH" : "GOOGLE_AUTH_FAILED");
+    console.error("[Google OAuth Callback State Error]:", {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      stateResultValid: stateResult.valid,
+    });
+    if (!stateResult.valid) {
+      signInUrl.searchParams.set("error", "GOOGLE_AUTH_STATE_MISMATCH");
+      signInUrl.searchParams.set("reason", "CSRF_STATE_COOKIE_MISSING_OR_MISMATCHED");
+    } else {
+      signInUrl.searchParams.set("error", "GOOGLE_AUTH_FAILED");
+      signInUrl.searchParams.set("reason", "MISSING_AUTH_CODE");
+    }
     return NextResponse.redirect(signInUrl);
   }
 

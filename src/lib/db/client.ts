@@ -100,8 +100,19 @@ export function getDb(): AppDatabase {
   }
 
   // 2. Embedded Local PostgreSQL Database (Zero-Setup Option B)
-  const dataDir = path.resolve(process.cwd(), ".data/pglite");
-  fs.mkdirSync(dataDir, { recursive: true });
+  // In serverless environments (e.g. AWS Lambda / Vercel), process.cwd() is read-only (/var/task).
+  // Use /tmp/.data/pglite if /tmp exists and is writable, otherwise fall back to local .data/pglite.
+  let dataDir = path.resolve(process.cwd(), ".data/pglite");
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+  } catch (err: any) {
+    if (err?.code === "EROFS" || err?.code === "EACCES" || err?.code === "ENOENT") {
+      dataDir = path.resolve("/tmp", ".data/pglite");
+      fs.mkdirSync(dataDir, { recursive: true });
+    } else {
+      throw err;
+    }
+  }
 
   if (!globalThis.__synapse_pglite__) {
     globalThis.__synapse_pglite__ = new PGlite(dataDir);

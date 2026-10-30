@@ -100,17 +100,24 @@ export function getDb(): AppDatabase {
   }
 
   // 2. Embedded Local PostgreSQL Database (Zero-Setup Option B)
-  // In serverless environments (e.g. AWS Lambda / Vercel), process.cwd() is read-only (/var/task).
-  // Use /tmp/.data/pglite if /tmp exists and is writable, otherwise fall back to local .data/pglite.
-  let dataDir = path.resolve(process.cwd(), ".data/pglite");
-  try {
+  // In serverless environments (AWS Lambda / Vercel), process.cwd() is /var/task and read-only.
+  // When running under Vercel/AWS or when VERCEL=1 or AWS_LAMBDA_FUNCTION_NAME is set, use /tmp/.data/pglite.
+  const isServerless =
+    Boolean(process.env.VERCEL) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    process.cwd().startsWith("/var/task");
+
+  let dataDir: string;
+  if (isServerless) {
+    dataDir = path.resolve("/tmp", ".data/pglite");
     fs.mkdirSync(dataDir, { recursive: true });
-  } catch (err: any) {
-    if (err?.code === "EROFS" || err?.code === "EACCES" || err?.code === "ENOENT") {
+  } else {
+    try {
+      dataDir = path.resolve(process.cwd(), ".data/pglite");
+      fs.mkdirSync(dataDir, { recursive: true });
+    } catch {
       dataDir = path.resolve("/tmp", ".data/pglite");
       fs.mkdirSync(dataDir, { recursive: true });
-    } else {
-      throw err;
     }
   }
 

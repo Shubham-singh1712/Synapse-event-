@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { users, sessions } from "@/lib/db/schema";
 import { cookies } from "next/headers";
-import { AUTH_SESSION_DAYS, AuthenticatedUser } from "./auth-service";
+import { AUTH_SESSION_DAYS, AuthenticatedUser, createSignedSessionToken } from "./auth-service";
 import type { NextRequest } from "next/server";
 import { sanitizeRedirectPath } from "./return-url";
 
@@ -81,6 +81,18 @@ export function generateOAuthState(): string {
 }
 
 /**
+ * Generates a URL-safe base64 encoded OAuth state payload containing state, redirectUri, and returnUrl.
+ */
+export function encodeOAuthStateCookie(state: string, redirectUri?: string, returnUrl?: string): string {
+  const payload = {
+    s: state,
+    r: redirectUri || "",
+    u: returnUrl ? sanitizeRedirectPath(returnUrl) : "",
+  };
+  return Buffer.from(JSON.stringify(payload)).toString("base64url");
+}
+
+/**
  * Sets the secure state cookie for CSRF validation during OAuth flow,
  * preserving the exact redirect URI and safe returnUrl used for this authorization cycle.
  */
@@ -88,11 +100,10 @@ export async function setOAuthStateCookie(
   state: string,
   redirectUri?: string,
   returnUrl?: string
-): Promise<void> {
+): Promise<string> {
   const cookieStore = await cookies();
   const isProduction = process.env.NODE_ENV === "production";
-  const safeReturn = returnUrl ? sanitizeRedirectPath(returnUrl) : "";
-  const cookieValue = `${state}|${redirectUri || ""}|${safeReturn}`;
+  const cookieValue = encodeOAuthStateCookie(state, redirectUri, returnUrl);
 
   cookieStore.set(GOOGLE_OAUTH_STATE_COOKIE, cookieValue, {
     httpOnly: true,
@@ -101,10 +112,13 @@ export async function setOAuthStateCookie(
     path: "/",
     maxAge: 60 * 10, // 10 minutes lifetime
   });
+
+  return cookieValue;
 }
 
 /**
  * Validates and clears the OAuth state cookie.
+ * Supports canonical base64url JSON payload as well as legacy pipe-delimited format.
  * Returns the exact redirectUri and safe returnUrl that initiated the flow.
  */
 export async function validateAndClearOAuthStateCookie(
@@ -115,16 +129,37 @@ export async function validateAndClearOAuthStateCookie(
   }
 
   const cookieStore = await cookies();
-  const storedValue = cookieStore.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
+  const storedRaw = cookieStore.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
 
   // Clear cookie regardless of outcome to prevent replay attacks
   cookieStore.delete(GOOGLE_OAUTH_STATE_COOKIE);
 
-  if (!storedValue) {
+  if (!storedRaw) {
     return { valid: false };
   }
 
-  const [storedState, storedRedirectUri, storedReturnUrl] = storedValue.split("|");
+  let storedState = "";
+  let storedRedirectUri: string | undefined;
+  let storedReturnUrl: string | undefined;
+
+  // 1. Try base64url JSON decode first (canonical format)
+  try {
+    const jsonStr = Buffer.from(storedRaw, "base64url").toString("utf-8");
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && typeof parsed.s === "string") {
+      storedState = parsed.s;
+      storedRedirectUri = parsed.r || undefined;
+      storedReturnUrl = parsed.u || undefined;
+    }
+  } catch {
+    // 2. Fallback: try URI-decoded pipe format or raw pipe format
+    const decoded = decodeURIComponent(storedRaw);
+    const parts = (decoded.includes("|") ? decoded : storedRaw).split("|");
+    storedState = parts[0] || "";
+    storedRedirectUri = parts[1] || undefined;
+    storedReturnUrl = parts[2] || undefined;
+  }
+
   if (!storedState) {
     return { valid: false };
   }
@@ -138,7 +173,7 @@ export async function validateAndClearOAuthStateCookie(
     const isMatch = crypto.timingSafeEqual(bufReceived, bufStored);
     return {
       valid: isMatch,
-      redirectUri: storedRedirectUri || undefined,
+      redirectUri: storedRedirectUri,
       returnUrl: storedReturnUrl ? sanitizeRedirectPath(storedReturnUrl) : undefined,
     };
   } catch {
@@ -298,9 +333,15 @@ export async function linkOrCreateGoogleUserAndSession(
   }
 
   // 2. Create active session in database
-  const sessionToken = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + AUTH_SESSION_DAYS);
+
+  const sessionToken = createSignedSessionToken({
+    userId: targetUser.id,
+    email: targetUser.email,
+    name: targetUser.name,
+    expiresAt: expiresAt.getTime(),
+  });
 
   await db.insert(sessions).values({
     userId: targetUser.id,

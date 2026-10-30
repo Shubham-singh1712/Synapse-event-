@@ -8,6 +8,7 @@ import {
   getGoogleRedirectUri,
   validateArchetype,
   buildAuthRedirectUrl,
+  encodeOAuthStateCookie,
 } from "@/lib/auth/google-oauth";
 import { NextRequest } from "next/server";
 
@@ -157,5 +158,21 @@ describe("Google OAuth Security & Configuration", () => {
     const invalidAuth = buildAuthRedirectUrl("INVALID", null, "/sign-in");
     expect(invalidAuth).toContain("returnUrl=%2Fevents%2Fnew");
     expect(invalidAuth).not.toContain("type=");
+  });
+
+  // 8. Safe URL-safe Base64 State Cookie Serialization
+  it("encodes state and destination into URL-safe base64 without pipe characters or special characters", () => {
+    const state = generateOAuthState();
+    const encoded = encodeOAuthStateCookie(state, "http://localhost:3000/api/auth/google/callback", "/events/new");
+
+    expect(encoded).not.toContain("|");
+    expect(encoded).not.toContain(" ");
+    expect(encoded).not.toContain("%");
+
+    const decodedStr = Buffer.from(encoded, "base64url").toString("utf-8");
+    const parsed = JSON.parse(decodedStr);
+    expect(parsed.s).toBe(state);
+    expect(parsed.r).toBe("http://localhost:3000/api/auth/google/callback");
+    expect(parsed.u).toBe("/events/new");
   });
 });

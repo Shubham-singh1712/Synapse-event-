@@ -4,6 +4,7 @@ import {
   getGoogleRedirectUri,
   generateOAuthState,
   setOAuthStateCookie,
+  encodeOAuthStateCookie,
   buildGoogleAuthorizationUrl,
   sanitizeRedirectPath,
   validateArchetype,
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
 
   // Generate secure state token and store redirect URI + returnUrl in secure cookie for CSRF defense
   const state = generateOAuthState();
+  const cookieValue = encodeOAuthStateCookie(state, redirectUri, targetReturnUrl);
   await setOAuthStateCookie(state, redirectUri, targetReturnUrl);
 
   const authUrl = buildGoogleAuthorizationUrl({
@@ -52,8 +54,6 @@ export async function GET(req: NextRequest) {
 
   const response = NextResponse.redirect(authUrl);
   const isProduction = process.env.NODE_ENV === "production";
-  const safeReturn = targetReturnUrl ? sanitizeRedirectPath(targetReturnUrl) : "";
-  const cookieValue = `${state}|${redirectUri || ""}|${safeReturn}`;
 
   response.cookies.set("synapse_oauth_state", cookieValue, {
     httpOnly: true,

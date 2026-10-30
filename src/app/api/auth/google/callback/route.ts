@@ -6,8 +6,8 @@ import {
   exchangeGoogleAuthorizationCode,
   fetchGoogleUserProfile,
   linkOrCreateGoogleUserAndSession,
+  GOOGLE_OAUTH_STATE_COOKIE,
 } from "@/lib/auth/google-oauth";
-import { setAuthSessionCookie } from "@/lib/auth/auth-service";
 import { DatabaseConfigurationError } from "@/lib/db/client";
 
 export async function GET(req: NextRequest) {
@@ -87,6 +87,9 @@ export async function GET(req: NextRequest) {
     const destinationUrl = new URL(targetPath, req.url);
     const redirectResponse = NextResponse.redirect(destinationUrl);
     const isProduction = process.env.NODE_ENV === "production";
+
+    // Cleanly remove OAuth state cookie on redirect
+    redirectResponse.cookies.delete(GOOGLE_OAUTH_STATE_COOKIE);
 
     redirectResponse.cookies.set("synapse_auth_session", sessionToken, {
       httpOnly: true,

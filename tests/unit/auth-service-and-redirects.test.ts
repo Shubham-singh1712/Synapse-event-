@@ -4,6 +4,8 @@ import {
   verifyPassword,
   AUTH_COOKIE_NAME,
   AUTH_SESSION_DAYS,
+  createSignedSessionToken,
+  verifySignedSessionToken,
 } from "@/lib/auth/auth-service";
 import {
   sanitizeRedirectPath,
@@ -50,6 +52,41 @@ describe("Cryptographic Authentication & Password Security", () => {
   it("defines standard session parameters", () => {
     expect(AUTH_COOKIE_NAME).toBe("synapse_auth_session");
     expect(AUTH_SESSION_DAYS).toBe(30);
+  });
+
+  it("creates and verifies cryptographically signed session tokens", () => {
+    const payload = {
+      userId: "4435bba0-91de-4fd9-a7b6-f140120b256f",
+      email: "curator@synapse-event.com",
+      name: "Curator User",
+      expiresAt: Date.now() + 1000 * 60 * 60,
+    };
+
+    const token = createSignedSessionToken(payload);
+    expect(token.length).toBeLessThan(255);
+    expect(token.split(".")).toHaveLength(3);
+
+    const verified = verifySignedSessionToken(token);
+    expect(verified).not.toBeNull();
+    expect(verified!.userId).toBe(payload.userId);
+    expect(verified!.email).toBe(payload.email);
+    expect(verified!.name).toBe(payload.name);
+
+    // Tampered token rejection
+    const [id, b64, sig] = token.split(".");
+    const tamperedPayload = Buffer.from(
+      JSON.stringify({ u: "hacked-user-id", e: "evil@attacker.com", x: payload.expiresAt })
+    ).toString("base64url");
+    const tamperedToken = `${id}.${tamperedPayload}.${sig}`;
+    expect(verifySignedSessionToken(tamperedToken)).toBeNull();
+
+    // Expired token rejection
+    const expiredPayload = {
+      ...payload,
+      expiresAt: Date.now() - 1000,
+    };
+    const expiredToken = createSignedSessionToken(expiredPayload);
+    expect(verifySignedSessionToken(expiredToken)).toBeNull();
   });
 });
 

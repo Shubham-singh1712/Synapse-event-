@@ -118,11 +118,13 @@ export function CelebrationCopilotDrawer({
     }
   }, [messages, isLoading]);
 
-  // Focus input when opened
+  // Focus input when opened (with cleanup on close/unmount)
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 200);
+      const focusTimer = setTimeout(() => inputRef.current?.focus(), 200);
+      return () => clearTimeout(focusTimer);
     }
+    return undefined;
   }, [isOpen]);
 
   const handleSendMessage = async (text: string) => {

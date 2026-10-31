@@ -146,68 +146,79 @@ export async function persistEventAndPlan(
       },
     });
 
-    // 3. Insert budget items
+    // 3–6. Insert child records (budget items, milestones, vendor tasks, ideas) concurrently
+    const childInsertTasks: Promise<unknown>[] = [];
+
     if (plan.budgetItems.length > 0) {
-      await tx.insert(budgetItems).values(
-        plan.budgetItems.map((item) => ({
-          eventId: eventData.id,
-          category: item.category,
-          description: item.description,
-          estimatedCostCents: item.estimatedCostCents,
-          actualCostCents: item.actualCostCents ?? 0,
-          status: item.status ?? "ESTIMATED",
-          origin: "AI_GENERATED",
-          isCustomByUser: false,
-          isGuestSensitive: item.isGuestSensitive ?? false,
-        }))
+      childInsertTasks.push(
+        tx.insert(budgetItems).values(
+          plan.budgetItems.map((item) => ({
+            eventId: eventData.id,
+            category: item.category,
+            description: item.description,
+            estimatedCostCents: item.estimatedCostCents,
+            actualCostCents: item.actualCostCents ?? 0,
+            status: item.status ?? "ESTIMATED",
+            origin: "AI_GENERATED",
+            isCustomByUser: false,
+            isGuestSensitive: item.isGuestSensitive ?? false,
+          }))
+        )
       );
     }
 
-    // 4. Insert timeline milestones
     if (plan.milestones.length > 0) {
-      await tx.insert(timelineMilestones).values(
-        plan.milestones.map((m) => ({
-          eventId: eventData.id,
-          title: m.title,
-          description: m.description,
-          dueAt: m.dueAt,
-          offsetDaysFromEvent: m.offsetDaysFromEvent,
-          status: m.status ?? "NOT_STARTED",
-          origin: "AI_GENERATED",
-          isCustomByUser: false,
-        }))
+      childInsertTasks.push(
+        tx.insert(timelineMilestones).values(
+          plan.milestones.map((m) => ({
+            eventId: eventData.id,
+            title: m.title,
+            description: m.description,
+            dueAt: m.dueAt,
+            offsetDaysFromEvent: m.offsetDaysFromEvent,
+            status: m.status ?? "NOT_STARTED",
+            origin: "AI_GENERATED",
+            isCustomByUser: false,
+          }))
+        )
       );
     }
 
-    // 5. Insert vendor tasks
     if (plan.vendorTasks.length > 0) {
-      await tx.insert(vendorTasks).values(
-        plan.vendorTasks.map((t) => ({
-          eventId: eventData.id,
-          category: t.category,
-          title: t.title,
-          requirements: t.requirements,
-          status: t.status ?? "NOT_STARTED",
-          estimatedCostCents: t.estimatedCostCents,
-          origin: "AI_GENERATED",
-          isCustomByUser: false,
-        }))
+      childInsertTasks.push(
+        tx.insert(vendorTasks).values(
+          plan.vendorTasks.map((t) => ({
+            eventId: eventData.id,
+            category: t.category,
+            title: t.title,
+            requirements: t.requirements,
+            status: t.status ?? "NOT_STARTED",
+            estimatedCostCents: t.estimatedCostCents,
+            origin: "AI_GENERATED",
+            isCustomByUser: false,
+          }))
+        )
       );
     }
 
-    // 6. Insert ideas
     if (plan.ideas.length > 0) {
-      await tx.insert(ideaItems).values(
-        plan.ideas.map((i) => ({
-          eventId: eventData.id,
-          category: i.category,
-          title: i.title,
-          description: i.description,
-          estimatedCostCents: i.estimatedCostCents,
-          origin: "AI_GENERATED",
-          isCustomByUser: false,
-        }))
+      childInsertTasks.push(
+        tx.insert(ideaItems).values(
+          plan.ideas.map((i) => ({
+            eventId: eventData.id,
+            category: i.category,
+            title: i.title,
+            description: i.description,
+            estimatedCostCents: i.estimatedCostCents,
+            origin: "AI_GENERATED",
+            isCustomByUser: false,
+          }))
+        )
       );
+    }
+
+    if (childInsertTasks.length > 0) {
+      await Promise.all(childInsertTasks);
     }
 
     return { eventId: eventData.id };
@@ -215,7 +226,7 @@ export async function persistEventAndPlan(
 }
 
 /**
- * Loads an event and all its associated plan entities.
+ * Loads an event and all its associated plan entities in a single parallel batch.
  * Strictly verifies workspace / user authorization before returning data.
  */
 export async function getEventWithPlan(
@@ -225,31 +236,25 @@ export async function getEventWithPlan(
   await ensureDbReady();
   const db = getDb();
 
-  // 1. Fetch event
-  const eventRows = await db
-    .select()
-    .from(events)
-    .where(eq(events.id, eventId))
-    .limit(1);
+  // 1. Fetch event and all child tables concurrently in a single parallel batch
+  const [eventRows, bRows, mRows, vRows, iRows] = await Promise.all([
+    db.select().from(events).where(eq(events.id, eventId)).limit(1),
+    db.select().from(budgetItems).where(eq(budgetItems.eventId, eventId)).orderBy(asc(budgetItems.createdAt)),
+    db.select().from(timelineMilestones).where(eq(timelineMilestones.eventId, eventId)).orderBy(asc(timelineMilestones.dueAt)),
+    db.select().from(vendorTasks).where(eq(vendorTasks.eventId, eventId)).orderBy(asc(vendorTasks.createdAt)),
+    db.select().from(ideaItems).where(eq(ideaItems.eventId, eventId)).orderBy(asc(ideaItems.createdAt)),
+  ]);
 
   const eventRow = eventRows[0];
   if (!eventRow) {
     return null;
   }
 
-  // 2. Strict IDOR Authorization Check
+  // 2. Strict IDOR Authorization Check (guaranteed before any data is processed or returned)
   checkEventOwnership(
     { workspaceId: eventRow.workspaceId, userId: eventRow.userId },
     authContext
   );
-
-  // 3. Fetch related records with deterministic ordering
-  const [bRows, mRows, vRows, iRows] = await Promise.all([
-    db.select().from(budgetItems).where(eq(budgetItems.eventId, eventId)).orderBy(asc(budgetItems.createdAt)),
-    db.select().from(timelineMilestones).where(eq(timelineMilestones.eventId, eventId)).orderBy(asc(timelineMilestones.dueAt)),
-    db.select().from(vendorTasks).where(eq(vendorTasks.eventId, eventId)).orderBy(asc(vendorTasks.createdAt)),
-    db.select().from(ideaItems).where(eq(ideaItems.eventId, eventId)).orderBy(asc(ideaItems.createdAt)),
-  ]);
 
   const parsedEvent: EventEntity = {
     id: eventRow.id,

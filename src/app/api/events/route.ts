@@ -82,27 +82,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Establish or retrieve session context
-    const session = await getOrCreateWorkspaceSession();
+    // 3 & 4. Establish session and generate structured event plan concurrently
     const eventId = crypto.randomUUID();
-
-    // 4. Generate structured event plan (via Gemini or deterministic benchmark template)
-    const planResult = await generateEventPlan({
-      eventId,
-      archetype: eventInput.archetype,
-      title: eventInput.title,
-      eventDate: eventInput.eventDate,
-      timezone: eventInput.timezone,
-      totalBudgetCents: eventInput.totalBudgetCents,
-      currency: eventInput.currency,
-      guestCount: eventInput.guestCount,
-      location: eventInput.location,
-      theme: typeof eventInput.preferences?.theme === "string" ? eventInput.preferences.theme : undefined,
-      priorities: typeof eventInput.preferences?.priorities === "string" ? eventInput.preferences.priorities : undefined,
-      subtypes: Array.isArray(eventInput.preferences?.subtypes) ? (eventInput.preferences.subtypes as string[]) : [],
-      dietary: typeof eventInput.preferences?.dietary === "string" ? eventInput.preferences.dietary : undefined,
-      preferences: eventInput.preferences,
-    });
+    const [session, planResult] = await Promise.all([
+      getOrCreateWorkspaceSession(),
+      generateEventPlan({
+        eventId,
+        archetype: eventInput.archetype,
+        title: eventInput.title,
+        eventDate: eventInput.eventDate,
+        timezone: eventInput.timezone,
+        totalBudgetCents: eventInput.totalBudgetCents,
+        currency: eventInput.currency,
+        guestCount: eventInput.guestCount,
+        location: eventInput.location,
+        theme: typeof eventInput.preferences?.theme === "string" ? eventInput.preferences.theme : undefined,
+        priorities: typeof eventInput.preferences?.priorities === "string" ? eventInput.preferences.priorities : undefined,
+        subtypes: Array.isArray(eventInput.preferences?.subtypes) ? (eventInput.preferences.subtypes as string[]) : [],
+        dietary: typeof eventInput.preferences?.dietary === "string" ? eventInput.preferences.dietary : undefined,
+        preferences: eventInput.preferences,
+      }),
+    ]);
 
     if (!planResult.success) {
       return NextResponse.json(

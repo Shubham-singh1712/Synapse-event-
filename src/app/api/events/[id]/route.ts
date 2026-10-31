@@ -85,20 +85,24 @@ export async function PATCH(
       );
     }
 
-    const session = await getOrCreateWorkspaceSession();
+    const [session, bodyResult] = await Promise.all([
+      getOrCreateWorkspaceSession(),
+      req
+        .json()
+        .then((data) => ({ ok: true as const, data }))
+        .catch(() => ({ ok: false as const, data: null })),
+    ]);
     const authContext = {
       workspaceId: session.workspaceId,
       userId: session.user?.id,
     };
-    let rawBody: unknown;
-    try {
-      rawBody = await req.json();
-    } catch {
+    if (!bodyResult.ok) {
       return NextResponse.json(
         { error: "INVALID_JSON", message: "Request body must be valid JSON." },
         { status: 400 }
       );
     }
+    const rawBody: unknown = bodyResult.data;
 
     const parseResult = PatchEventPayloadSchema.safeParse(rawBody);
     if (!parseResult.success) {

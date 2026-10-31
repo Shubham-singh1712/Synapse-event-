@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -85,6 +85,13 @@ export default function EventWizard({
   const [unpersistedPlan, setUnpersistedPlan] = useState<AiGeneratedPlanResponse | null>(null);
   const [generationMetadata, setGenerationMetadata] = useState<{ mode: string; notice?: string } | null>(null);
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const initArchetype = initialArchetype || "WEDDING";
 
@@ -325,8 +332,12 @@ export default function EventWizard({
   const copyPlanJson = () => {
     if (!unpersistedPlan) return;
     navigator.clipboard.writeText(JSON.stringify(unpersistedPlan, null, 2));
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 2000);
+    copyTimerRef.current = setTimeout(() => {
+      setCopiedJson(false);
+      copyTimerRef.current = null;
+    }, 2000);
   };
 
   // ==============================================================================

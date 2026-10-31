@@ -19,23 +19,26 @@ export async function POST(
       );
     }
 
-    // 1. Authenticate user/workspace session
-    const session = await getOrCreateWorkspaceSession();
+    // 1 & 2. Authenticate session and parse JSON request body concurrently
+    const [session, bodyResult] = await Promise.all([
+      getOrCreateWorkspaceSession(),
+      req
+        .json()
+        .then((data) => ({ ok: true as const, data }))
+        .catch(() => ({ ok: false as const, data: null })),
+    ]);
     const authContext = {
       workspaceId: session.workspaceId,
       userId: session.user?.id,
     };
 
-    // 2. Safely parse JSON request body
-    let rawBody: unknown;
-    try {
-      rawBody = await req.json();
-    } catch {
+    if (!bodyResult.ok) {
       return NextResponse.json(
         { error: "INVALID_JSON", message: "Request body must be valid JSON." },
         { status: 400 }
       );
     }
+    const rawBody: unknown = bodyResult.data;
 
     // 3. Validate request body against schema
     const parseResult = CopilotChatRequestSchema.safeParse(rawBody);

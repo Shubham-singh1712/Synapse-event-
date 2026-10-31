@@ -366,7 +366,11 @@ export async function validateSessionToken(
  */
 export async function terminateSession(sessionToken: string): Promise<void> {
   if (!sessionToken) return;
+  if (globalThis.__synapse_pending_session__?.sessionToken === sessionToken) {
+    globalThis.__synapse_pending_session__ = undefined;
+  }
   try {
+    await ensureDbReady();
     const db = getDb();
     await db.delete(sessions).where(eq(sessions.sessionToken, sessionToken));
   } catch {
@@ -376,11 +380,35 @@ export async function terminateSession(sessionToken: string): Promise<void> {
 
 /**
  * Retrieves the current authenticated user from request cookies.
+ * On cold serverless containers without DATABASE_URL where the embedded DB
+ * has not yet been initialized, verifies signed HMAC session tokens directly
+ * in <0.1ms and defers PGlite hydration until a route actually queries the DB.
  */
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
   if (!token) return null;
+
+  if (!process.env.DATABASE_URL && !globalThis.__synapse_db__ && token.includes(".")) {
+    const verifiedPayload = verifySignedSessionToken(token);
+    if (!verifiedPayload) {
+      return null;
+    }
+    globalThis.__synapse_pending_session__ = {
+      sessionToken: token,
+      userId: verifiedPayload.userId,
+      email: verifiedPayload.email,
+      name: verifiedPayload.name,
+      expiresAt: verifiedPayload.expiresAt,
+    };
+    return {
+      id: verifiedPayload.userId,
+      email: verifiedPayload.email,
+      name: verifiedPayload.name,
+      createdAt: new Date(),
+    };
+  }
+
   return await validateSessionToken(token);
 }
 

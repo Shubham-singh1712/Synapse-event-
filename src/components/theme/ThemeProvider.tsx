@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 type Theme = "light" | "dark";
 
@@ -14,37 +21,41 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check saved theme in localStorage or system preference
+    // Check saved theme in localStorage; only trigger state update when different from initial "light"
     const saved = localStorage.getItem("synapse_theme") as Theme | null;
-    if (saved === "light" || saved === "dark") {
-      setThemeState(saved);
-      document.documentElement.classList.toggle("dark", saved === "dark");
+    if (saved === "dark") {
+      setThemeState("dark");
+      document.documentElement.classList.add("dark");
     } else {
-      // Default to light theme (Warm Ivory) as specified by prompt
-      setThemeState("light");
       document.documentElement.classList.remove("dark");
     }
-    setMounted(true);
   }, []);
 
-  const setTheme = (newTheme: Theme) => {
+  const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
     localStorage.setItem("synapse_theme", newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
+  }, []);
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => {
+      const next: Theme = prev === "light" ? "dark" : "light";
+      localStorage.setItem("synapse_theme", next);
+      document.documentElement.classList.toggle("dark", next === "dark");
+      return next;
+    });
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ theme, toggleTheme, setTheme }),
+    [theme, toggleTheme, setTheme]
+  );
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
-      <div style={{ visibility: mounted ? "visible" : "visible" }}>
-        {children}
-      </div>
+    <ThemeContext.Provider value={contextValue}>
+      {children}
     </ThemeContext.Provider>
   );
 }

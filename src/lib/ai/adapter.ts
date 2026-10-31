@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import {
   AiGeneratedPlanResponseSchema,
   type GenerateEventPlanRequest,
@@ -113,6 +112,7 @@ export async function generateEventPlan(
 
   // 2. Live Gemini Generation
   try {
+    const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
     const systemInstruction = getArchetypeSystemPrompt(req.archetype);
@@ -132,10 +132,14 @@ export async function generateEventPlan(
       preferences: req.preferences,
     });
 
-    // Run with timeout race
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("AI_PROVIDER_TIMEOUT")), AI_REQUEST_TIMEOUT_MS)
-    );
+    // Run with timeout race and guaranteed timer cleanup
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new Error("AI_PROVIDER_TIMEOUT")),
+        AI_REQUEST_TIMEOUT_MS
+      );
+    });
 
     const callPromise = ai.models.generateContent({
       model,
@@ -154,8 +158,15 @@ export async function generateEventPlan(
         responseMimeType: "application/json",
       },
     });
+    // Suppress unhandled rejection if timeout wins the race
+    callPromise.catch(() => {});
 
-    const response = await Promise.race([callPromise, timeoutPromise]);
+    let response;
+    try {
+      response = await Promise.race([callPromise, timeoutPromise]);
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
     const responseText = response.text;
 
     if (!responseText || responseText.trim().length === 0) {

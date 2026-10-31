@@ -118,7 +118,7 @@ export default async function PrivacyPage() {
                 <div className="p-3.5 bg-surface border border-border rounded-xl">
                   <strong className="text-primary font-semibold block mb-1">A. User Account Information</strong>
                   <span className="text-xs text-muted">
-                    Full name, email address, and a cryptographically salted password hash (via bcrypt with 10 salt rounds). We never store raw, plaintext passwords.
+                    Full name, email address, and a cryptographically salted password hash (via Node.js crypto.scrypt key derivation with a 16-byte cryptographic salt). We never store raw, plaintext passwords.
                   </span>
                 </div>
                 <div className="p-3.5 bg-surface border border-border rounded-xl">
@@ -189,7 +189,7 @@ export default async function PrivacyPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     <tr>
-                      <td className="p-2.5 font-mono text-coral">synapse_session</td>
+                      <td className="p-2.5 font-mono text-coral">synapse_auth_session</td>
                       <td className="p-2.5">Authenticates your active user session</td>
                       <td className="p-2.5">30 days</td>
                       <td className="p-2.5">HttpOnly, SameSite=Lax, Secure (Prod)</td>
@@ -201,10 +201,10 @@ export default async function PrivacyPage() {
                       <td className="p-2.5">HttpOnly, SameSite=Lax, Secure (Prod)</td>
                     </tr>
                     <tr>
-                      <td className="p-2.5 font-mono text-coral">theme</td>
+                      <td className="p-2.5 font-mono text-coral">synapse_theme</td>
                       <td className="p-2.5">Preserves your preferred theme (light/dark)</td>
                       <td className="p-2.5">Persistent</td>
-                      <td className="p-2.5">Client-accessible</td>
+                      <td className="p-2.5">Client-accessible (localStorage)</td>
                     </tr>
                   </tbody>
                 </table>
@@ -259,7 +259,7 @@ export default async function PrivacyPage() {
               </h2>
               <p>We implement industry-standard technical safeguards to protect your celebration details:</p>
               <ul className="list-disc pl-5 space-y-1.5 text-xs sm:text-sm">
-                <li>Bcrypt password hashing with unique salt rounds to prevent rainbow table attacks.</li>
+                <li>Node.js crypto.scrypt password key derivation with unique 16-byte cryptographic salts to prevent rainbow table attacks.</li>
                 <li>Cryptographically secure random tokens for session tokens and OAuth CSRF state verification.</li>
                 <li>Parameterized database queries to defend against SQL injection.</li>
                 <li>HttpOnly cookie flags to prevent malicious scripts from accessing session tokens via XSS.</li>

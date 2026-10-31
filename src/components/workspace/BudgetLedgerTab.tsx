@@ -45,6 +45,134 @@ const LUXURY_PALETTE = [
 import { CELEBRATION_CATEGORIES } from "@/lib/domain/budget";
 export { CELEBRATION_CATEGORIES };
 
+interface LedgerDonutSlice {
+  category: string;
+  cents: number;
+  percentage: number;
+  color: string;
+  pathData: string;
+}
+
+interface LedgerDonutChartProps {
+  donutData: {
+    total: number;
+    slices: LedgerDonutSlice[];
+  };
+  chartMeasure: "PLANNED" | "COMMITTED" | "PAID";
+  currency: string;
+}
+
+const LedgerDonutChart = React.memo(function LedgerDonutChart({
+  donutData,
+  chartMeasure,
+  currency,
+}: LedgerDonutChartProps) {
+  const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
+  const activeSlice = useMemo(
+    () =>
+      hoveredSlice
+        ? donutData.slices.find((s) => s.category === hoveredSlice) ?? null
+        : null,
+    [donutData.slices, hoveredSlice]
+  );
+
+  return (
+    <div className="pt-4 flex flex-col items-center">
+      <div className="relative w-48 h-48 sm:w-52 sm:h-52">
+        <svg
+          viewBox="0 0 200 200"
+          className="w-full h-full transform -rotate-90 filter drop-shadow-xs"
+          role="img"
+          aria-label="Category allocation donut chart"
+        >
+          {donutData.slices.map((slice) => {
+            const isHovered = hoveredSlice === slice.category;
+            return (
+              <path
+                key={slice.category}
+                d={slice.pathData}
+                fill={slice.color}
+                className="transition-all duration-200 cursor-pointer hover:opacity-90"
+                style={{
+                  transform: isHovered ? "scale(1.02)" : "scale(1)",
+                  transformOrigin: "100px 100px",
+                }}
+                onMouseEnter={() => setHoveredSlice(slice.category)}
+                onMouseLeave={() => setHoveredSlice(null)}
+              >
+                <title>{`${slice.category}: ${formatCentsToCurrency(
+                  slice.cents,
+                  currency
+                )} (${slice.percentage}%)`}</title>
+              </path>
+            );
+          })}
+        </svg>
+
+        {/* Donut Center Info */}
+        <div
+          aria-live="polite"
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4"
+        >
+          <span className="text-[10px] font-sans uppercase tracking-[0.15em] text-muted block truncate max-w-[130px]">
+            {activeSlice
+              ? activeSlice.category
+              : chartMeasure === "PLANNED"
+              ? "Total Allocation"
+              : chartMeasure === "COMMITTED"
+              ? "Total Booked"
+              : "Total Settled"}
+          </span>
+          <span className="font-serif text-lg sm:text-xl font-normal text-primary tracking-tight block tabular-nums">
+            {formatCentsToCurrency(
+              activeSlice ? activeSlice.cents : donutData.total,
+              currency
+            )}
+          </span>
+          <span className="text-[10px] text-muted block font-mono mt-0.5">
+            {activeSlice
+              ? `${activeSlice.percentage}% of ${chartMeasure.toLowerCase()}`
+              : `${donutData.slices.length} Categories`}
+          </span>
+        </div>
+      </div>
+
+      {/* Compact Interactive Legend */}
+      <div className="w-full grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-border/60 text-xs">
+        {donutData.slices.slice(0, 6).map((slice) => {
+          const isHovered = hoveredSlice === slice.category;
+          return (
+            <div
+              key={slice.category}
+              tabIndex={0}
+              onMouseEnter={() => setHoveredSlice(slice.category)}
+              onMouseLeave={() => setHoveredSlice(null)}
+              onFocus={() => setHoveredSlice(slice.category)}
+              onBlur={() => setHoveredSlice(null)}
+              className={`flex items-center justify-between p-1.5 rounded-lg transition cursor-default focus:outline-none focus:ring-2 focus:ring-coral/40 ${
+                isHovered ? "bg-surface-elevated shadow-xs" : ""
+              }`}
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: slice.color }}
+                />
+                <span className="text-[11px] text-primary truncate">
+                  {slice.category}
+                </span>
+              </div>
+              <span className="text-[11px] text-muted font-mono shrink-0 ml-1">
+                {slice.percentage}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 interface BudgetLedgerTabProps {
   event: EventEntity;
   budgetItems: BudgetItemEntity[];
@@ -106,7 +234,6 @@ export function BudgetLedgerTab({
   const [chartMeasure, setChartMeasure] = useState<
     "PLANNED" | "COMMITTED" | "PAID"
   >("PLANNED");
-  const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
 
   // Editing state
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -928,86 +1055,11 @@ export function BudgetLedgerTab({
                 </p>
               </div>
             ) : (
-              <div className="pt-4 flex flex-col items-center">
-                <div className="relative w-48 h-48 sm:w-52 sm:h-52">
-                  <svg
-                    viewBox="0 0 200 200"
-                    className="w-full h-full transform -rotate-90 filter drop-shadow-xs"
-                    role="img"
-                    aria-label="Category allocation donut chart"
-                  >
-                    {donutData.slices.map((slice) => {
-                      const isHovered = hoveredSlice === slice.category;
-                      return (
-                        <path
-                          key={slice.category}
-                          d={slice.pathData}
-                          fill={slice.color}
-                          className="transition-all duration-200 cursor-pointer hover:opacity-90"
-                          style={{
-                            transform: isHovered ? "scale(1.02)" : "scale(1)",
-                            transformOrigin: "100px 100px",
-                          }}
-                          onMouseEnter={() => setHoveredSlice(slice.category)}
-                          onMouseLeave={() => setHoveredSlice(null)}
-                        >
-                          <title>{`${slice.category}: ${formatCentsToCurrency(
-                            slice.cents,
-                            currency
-                          )} (${slice.percentage}%)`}</title>
-                        </path>
-                      );
-                    })}
-                  </svg>
-
-                  {/* Donut Center Info */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
-                    <span className="text-[10px] font-sans uppercase tracking-[0.15em] text-muted block">
-                      {chartMeasure === "PLANNED"
-                        ? "Total Allocation"
-                        : chartMeasure === "COMMITTED"
-                        ? "Total Booked"
-                        : "Total Settled"}
-                    </span>
-                    <span className="font-serif text-lg sm:text-xl font-normal text-primary tracking-tight block tabular-nums">
-                      {formatCentsToCurrency(donutData.total, currency)}
-                    </span>
-                    <span className="text-[10px] text-muted block font-mono mt-0.5">
-                      {donutData.slices.length} Categories
-                    </span>
-                  </div>
-                </div>
-
-                {/* Compact Interactive Legend */}
-                <div className="w-full grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-border/60 text-xs">
-                  {donutData.slices.slice(0, 6).map((slice) => {
-                    const isHovered = hoveredSlice === slice.category;
-                    return (
-                      <div
-                        key={slice.category}
-                        onMouseEnter={() => setHoveredSlice(slice.category)}
-                        onMouseLeave={() => setHoveredSlice(null)}
-                        className={`flex items-center justify-between p-1.5 rounded-lg transition cursor-default ${
-                          isHovered ? "bg-surface-elevated shadow-xs" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: slice.color }}
-                          />
-                          <span className="text-[11px] text-primary truncate">
-                            {slice.category}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-muted font-mono shrink-0 ml-1">
-                          {slice.percentage}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <LedgerDonutChart
+                donutData={donutData}
+                chartMeasure={chartMeasure}
+                currency={currency}
+              />
             )}
           </div>
 

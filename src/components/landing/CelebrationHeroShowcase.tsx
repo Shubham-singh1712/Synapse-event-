@@ -93,6 +93,18 @@ export function CelebrationHeroShowcase({ user }: Props) {
 
   useEffect(() => {
     const nextIdx = (activeIndex + 1) % HERO_SLIDES.length;
+
+    // On initial Slide 0 hydration, defer preloading Slide 1 until after the 0–2.5s LCP window
+    // so Slide 1 never competes with Slide 0 (the LCP element) for network bandwidth or decode.
+    if (activeIndex === 0) {
+      const preloadTimer = setTimeout(() => {
+        setRenderedIndices((prev) =>
+          prev.includes(nextIdx) ? prev : [...prev, nextIdx]
+        );
+      }, 3000);
+      return () => clearTimeout(preloadTimer);
+    }
+
     setRenderedIndices((prev) => {
       if (prev.includes(activeIndex) && prev.includes(nextIdx)) return prev;
       const set = new Set(prev);
@@ -100,6 +112,7 @@ export function CelebrationHeroShowcase({ user }: Props) {
       set.add(nextIdx);
       return Array.from(set);
     });
+    return undefined;
   }, [activeIndex]);
 
   const containerRef = useRef<HTMLDivElement>(null);

@@ -52,7 +52,7 @@
   --status-error: #F87171;
 }
 
-/* Atmospheric Atelier Background */
+/* Atmospheric Atelier Background (GPU-composited scroll without fixed background repaint overhead) */
 .bg-atelier-parchment {
   background-color: var(--bg-page);
   background-image: 
@@ -60,7 +60,6 @@
     radial-gradient(ellipse 60% 45% at 90% 12%, rgba(217, 119, 104, 0.06), transparent 60%),
     radial-gradient(ellipse 65% 50% at 10% 40%, rgba(105, 68, 81, 0.05), transparent 70%),
     radial-gradient(circle at 50% 100%, rgba(52, 34, 56, 0.04), transparent 80%);
-  background-attachment: fixed;
 }
 
 .dark .bg-atelier-parchment {
@@ -70,26 +69,27 @@
     radial-gradient(ellipse 60% 45% at 90% 12%, rgba(217, 119, 104, 0.04), transparent 60%),
     radial-gradient(ellipse 65% 50% at 10% 40%, rgba(105, 68, 81, 0.06), transparent 70%),
     radial-gradient(circle at 50% 100%, rgba(14, 10, 16, 0.8), transparent 80%);
-  background-attachment: fixed;
 }
 
-/* Subtle Paper Grain Overlay */
+/* Subtle Paper Texture Overlay (Zero SVG filter rasterization cost) */
 .atelier-grain {
   position: relative;
 }
 
 .atelier-grain::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.028;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.35;
+  background-image: radial-gradient(rgba(52, 34, 56, 0.045) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
 .dark .atelier-grain::before {
-  opacity: 0.038;
+  opacity: 0.25;
+  background-image: radial-gradient(rgba(250, 246, 248, 0.04) 1px, transparent 0);
 }
 
 /* Base Body Styles */

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -75,47 +75,67 @@ function TabLoadingSkeleton({ title }: { title: string }) {
   );
 }
 
-const BudgetLedgerTab = dynamic(
-  () => import("./BudgetLedgerTab").then((m) => m.BudgetLedgerTab),
-  {
-    loading: () => <TabLoadingSkeleton title="budget ledger" />,
-  }
-);
+const loadBudgetLedgerTab = () =>
+  import("./BudgetLedgerTab").then((m) => m.BudgetLedgerTab);
+const loadPlanChecklistTab = () =>
+  import("./PlanChecklistTab").then((m) => m.PlanChecklistTab);
+const loadVendorsBookingsTab = () =>
+  import("./VendorsBookingsTab").then((m) => m.VendorsBookingsTab);
+const loadInspirationStudioTab = () =>
+  import("./InspirationStudioTab").then((m) => m.InspirationStudioTab);
+const loadCelebrationCopilotDrawer = () =>
+  import("./CelebrationCopilotDrawer").then((m) => m.CelebrationCopilotDrawer);
+const loadPlanSimulationTab = () =>
+  import("./PlanSimulationTab").then((m) => m.PlanSimulationTab);
 
-const PlanChecklistTab = dynamic(
-  () => import("./PlanChecklistTab").then((m) => m.PlanChecklistTab),
-  {
-    loading: () => <TabLoadingSkeleton title="plan and checklist" />,
+function preloadWorkspaceTab(
+  tab: "budget" | "plan" | "vendors" | "ideas" | "impact" | "copilot"
+): void {
+  switch (tab) {
+    case "budget":
+      void loadBudgetLedgerTab();
+      break;
+    case "plan":
+      void loadPlanChecklistTab();
+      break;
+    case "vendors":
+      void loadVendorsBookingsTab();
+      break;
+    case "ideas":
+      void loadInspirationStudioTab();
+      break;
+    case "impact":
+      void loadPlanSimulationTab();
+      break;
+    case "copilot":
+      void loadCelebrationCopilotDrawer();
+      break;
   }
-);
+}
 
-const VendorsBookingsTab = dynamic(
-  () => import("./VendorsBookingsTab").then((m) => m.VendorsBookingsTab),
-  {
-    loading: () => <TabLoadingSkeleton title="vendors and bookings" />,
-  }
-);
+const BudgetLedgerTab = dynamic(loadBudgetLedgerTab, {
+  loading: () => <TabLoadingSkeleton title="budget ledger" />,
+});
 
-const InspirationStudioTab = dynamic(
-  () => import("./InspirationStudioTab").then((m) => m.InspirationStudioTab),
-  {
-    loading: () => <TabLoadingSkeleton title="inspiration studio" />,
-  }
-);
+const PlanChecklistTab = dynamic(loadPlanChecklistTab, {
+  loading: () => <TabLoadingSkeleton title="plan and checklist" />,
+});
 
-const CelebrationCopilotDrawer = dynamic(
-  () => import("./CelebrationCopilotDrawer").then((m) => m.CelebrationCopilotDrawer),
-  {
-    loading: () => null,
-  }
-);
+const VendorsBookingsTab = dynamic(loadVendorsBookingsTab, {
+  loading: () => <TabLoadingSkeleton title="vendors and bookings" />,
+});
 
-const PlanSimulationTab = dynamic(
-  () => import("./PlanSimulationTab").then((m) => m.PlanSimulationTab),
-  {
-    loading: () => <TabLoadingSkeleton title="plan adjustments and simulation" />,
-  }
-);
+const InspirationStudioTab = dynamic(loadInspirationStudioTab, {
+  loading: () => <TabLoadingSkeleton title="inspiration studio" />,
+});
+
+const CelebrationCopilotDrawer = dynamic(loadCelebrationCopilotDrawer, {
+  loading: () => null,
+});
+
+const PlanSimulationTab = dynamic(loadPlanSimulationTab, {
+  loading: () => <TabLoadingSkeleton title="plan adjustments and simulation" />,
+});
 
 import { BudgetDonutChart } from "./BudgetDonutChart";
 
@@ -268,12 +288,30 @@ export default function EventWorkspaceClient({
 
   // AI Celebration Copilot State
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [hasOpenedCopilot, setHasOpenedCopilot] = useState(false);
   const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string | undefined>(undefined);
 
   const handleOpenCopilotWithPrompt = (prompt: string) => {
     setCopilotInitialPrompt(prompt);
+    setHasOpenedCopilot(true);
     setIsCopilotOpen(true);
   };
+
+  // Pre-warm the two primary next-action tabs (Budget & Plan) during browser idle time
+  useEffect(() => {
+    const prewarmPrimaryTabs = () => {
+      preloadWorkspaceTab("budget");
+      preloadWorkspaceTab("plan");
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(prewarmPrimaryTabs, { timeout: 2500 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timer = setTimeout(prewarmPrimaryTabs, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Edit Event Modal State
   const [showEditEventModal, setShowEditEventModal] = useState(false);
@@ -322,11 +360,31 @@ export default function EventWorkspaceClient({
     [event.eventDate, milestones]
   );
 
-  // Clear feedback after 4 seconds
-  const showFeedback = (type: "success" | "error", text: string) => {
+  // Clear feedback after 4 seconds (cancels overlapping timers & cleans up on unmount)
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showFeedback = useCallback((type: "success" | "error", text: string) => {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
     setFeedbackMsg({ type, text });
-    setTimeout(() => setFeedbackMsg(null), 4000);
-  };
+    feedbackTimerRef.current = setTimeout(() => {
+      setFeedbackMsg(null);
+      feedbackTimerRef.current = null;
+    }, 4000);
+  }, []);
+
+  const handleOpenAddBudgetModal = useCallback(() => {
+    setShowAddBudgetModal(true);
+  }, []);
 
   // 0. Update Event Details
   const handleSaveEventDetails = async (e: React.FormEvent) => {
@@ -1216,8 +1274,11 @@ export default function EventWorkspaceClient({
             {/* Right: Quick Action Hub */}
             <div className="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
               <button
+                onMouseEnter={() => preloadWorkspaceTab("copilot")}
+                onFocus={() => preloadWorkspaceTab("copilot")}
                 onClick={() => {
                   setCopilotInitialPrompt(undefined);
+                  setHasOpenedCopilot(true);
                   setIsCopilotOpen(true);
                 }}
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-coral/15 to-champagne/20 hover:from-coral/25 hover:to-champagne/30 text-primary border border-champagne/40 font-medium text-xs transition shadow-subtle group"
@@ -1226,6 +1287,8 @@ export default function EventWorkspaceClient({
                 <span>Ask AI Planner</span>
               </button>
               <button
+                onMouseEnter={() => preloadWorkspaceTab("plan")}
+                onFocus={() => preloadWorkspaceTab("plan")}
                 onClick={() => setActiveTab("plan")}
                 className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-aubergine dark:bg-champagne hover:bg-aubergine-dark dark:hover:bg-champagne-dark text-white dark:text-aubergine font-medium text-xs transition shadow-subtle"
               >
@@ -1233,6 +1296,8 @@ export default function EventWorkspaceClient({
                 <span>+ Add Task</span>
               </button>
               <button
+                onMouseEnter={() => preloadWorkspaceTab("budget")}
+                onFocus={() => preloadWorkspaceTab("budget")}
                 onClick={() => {
                   setActiveTab("budget");
                   setShowAddBudgetModal(true);
@@ -1267,6 +1332,8 @@ export default function EventWorkspaceClient({
           </button>
 
           <button
+            onMouseEnter={() => preloadWorkspaceTab("budget")}
+            onFocus={() => preloadWorkspaceTab("budget")}
             onClick={() => setActiveTab("budget")}
             className={`py-2.5 sm:py-3 px-2 sm:px-3 transition flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 font-sans tracking-wide ${
               activeTab === "budget"
@@ -1282,6 +1349,8 @@ export default function EventWorkspaceClient({
           </button>
 
           <button
+            onMouseEnter={() => preloadWorkspaceTab("plan")}
+            onFocus={() => preloadWorkspaceTab("plan")}
             onClick={() => setActiveTab("plan")}
             className={`py-2.5 sm:py-3 px-2 sm:px-3 transition flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 font-sans tracking-wide ${
               activeTab === "plan" || activeTab === "timeline" || activeTab === "tasks"
@@ -1297,6 +1366,8 @@ export default function EventWorkspaceClient({
           </button>
 
           <button
+            onMouseEnter={() => preloadWorkspaceTab("vendors")}
+            onFocus={() => preloadWorkspaceTab("vendors")}
             onClick={() => setActiveTab("vendors")}
             className={`py-2.5 sm:py-3 px-2 sm:px-3 transition flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 font-sans tracking-wide ${
               activeTab === "vendors"
@@ -1312,6 +1383,8 @@ export default function EventWorkspaceClient({
           </button>
 
           <button
+            onMouseEnter={() => preloadWorkspaceTab("ideas")}
+            onFocus={() => preloadWorkspaceTab("ideas")}
             onClick={() => setActiveTab("ideas")}
             className={`py-2.5 sm:py-3 px-2 sm:px-3 transition flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 font-sans tracking-wide ${
               activeTab === "ideas"
@@ -1328,6 +1401,8 @@ export default function EventWorkspaceClient({
 
           {/* User-Facing Section: Plan Adjustments */}
           <button
+            onMouseEnter={() => preloadWorkspaceTab("impact")}
+            onFocus={() => preloadWorkspaceTab("impact")}
             onClick={() => setActiveTab("impact")}
             className={`py-2.5 sm:py-3 px-2 sm:px-3 transition flex items-center gap-1.5 sm:gap-2 shrink-0 border-b-2 font-sans tracking-wide ${
               activeTab === "impact"
@@ -1382,7 +1457,7 @@ export default function EventWorkspaceClient({
                   totalEstimatedCostCents={budgetSummary.totalEstimatedCostCents}
                   allocationPercent={budgetSummary.allocationPercent}
                   currency={currency}
-                  onAddExpense={() => setShowAddBudgetModal(true)}
+                  onAddExpense={handleOpenAddBudgetModal}
                 />
 
                 {/* Horizontal Category Distribution + Financial Stages (7 cols) */}
@@ -1537,7 +1612,7 @@ export default function EventWorkspaceClient({
                         : "bg-surface border border-border text-secondary hover:text-primary"
                     }`}
                   >
-                    Done ({milestones.filter((m) => m.status === "COMPLETED").length})
+                    Done ({timelineSummary.completedMilestones})
                   </button>
                 </div>
               </div>
@@ -1991,6 +2066,8 @@ export default function EventWorkspaceClient({
                       <span>Vendors Requiring Follow-Up</span>
                     </h3>
                     <button
+                      onMouseEnter={() => preloadWorkspaceTab("vendors")}
+                      onFocus={() => preloadWorkspaceTab("vendors")}
                       onClick={() => setActiveTab("vendors")}
                       className="text-xs text-coral hover:text-coral-hover font-medium transition"
                     >
@@ -2031,6 +2108,8 @@ export default function EventWorkspaceClient({
                     {vendorsRequiringFollowUp.length} vendor partners pending response
                   </span>
                   <button
+                    onMouseEnter={() => preloadWorkspaceTab("vendors")}
+                    onFocus={() => preloadWorkspaceTab("vendors")}
                     onClick={() => setActiveTab("vendors")}
                     className="text-coral font-medium hover:underline"
                   >
@@ -2065,6 +2144,8 @@ export default function EventWorkspaceClient({
                     Need to simulate budget adjustments?
                   </span>
                   <button
+                    onMouseEnter={() => preloadWorkspaceTab("impact")}
+                    onFocus={() => preloadWorkspaceTab("impact")}
                     onClick={() => setActiveTab("impact")}
                     className="text-coral hover:text-coral-hover font-semibold transition"
                   >
@@ -2274,8 +2355,11 @@ export default function EventWorkspaceClient({
       {/* Floating AI Planner Atelier Trigger */}
       <div className="fixed bottom-6 right-6 z-40">
         <button
+          onMouseEnter={() => preloadWorkspaceTab("copilot")}
+          onFocus={() => preloadWorkspaceTab("copilot")}
           onClick={() => {
             setCopilotInitialPrompt(undefined);
+            setHasOpenedCopilot(true);
             setIsCopilotOpen(true);
           }}
           className="px-4 py-3 rounded-full bg-aubergine hover:bg-aubergine-dark dark:bg-champagne dark:hover:bg-champagne-dark text-white dark:text-aubergine shadow-2xl flex items-center gap-2 text-xs font-serif font-medium border border-champagne/40 transition hover:scale-105 active:scale-95 group"
@@ -2285,19 +2369,21 @@ export default function EventWorkspaceClient({
         </button>
       </div>
 
-      {/* Celebration Copilot Drawer */}
-      <CelebrationCopilotDrawer
-        event={event}
-        currency={currency}
-        currencySymbol={currencySymbol}
-        isOpen={isCopilotOpen}
-        onClose={() => setIsCopilotOpen(false)}
-        onNavigateTab={(tab) => setActiveTab(tab)}
-        onAddBudget={handleCreateBudgetItemDirect}
-        onAddTask={handleAddVendorDirect}
-        showFeedback={showFeedback}
-        initialPrompt={copilotInitialPrompt}
-      />
+      {/* Celebration Copilot Drawer — deferred until first open to avoid initial route hydration overhead */}
+      {(isCopilotOpen || hasOpenedCopilot) && (
+        <CelebrationCopilotDrawer
+          event={event}
+          currency={currency}
+          currencySymbol={currencySymbol}
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
+          onNavigateTab={(tab) => setActiveTab(tab)}
+          onAddBudget={handleCreateBudgetItemDirect}
+          onAddTask={handleAddVendorDirect}
+          showFeedback={showFeedback}
+          initialPrompt={copilotInitialPrompt}
+        />
+      )}
     </div>
   );
 }

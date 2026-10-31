@@ -1,5 +1,5 @@
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
-import { getDb } from "@/lib/db/client";
+import { getDb, ensureDbReady } from "@/lib/db/client";
 import {
   events,
   budgetItems,
@@ -103,6 +103,7 @@ export async function persistEventAndPlan(
   plan: AiGeneratedPlanResponse,
   generationMode: PlanGenerationMode = "TEMPLATE_GENERATED"
 ): Promise<{ eventId: string }> {
+  await ensureDbReady();
   const db = getDb();
 
   return await db.transaction(async (tx) => {
@@ -221,6 +222,7 @@ export async function getEventWithPlan(
   eventId: string,
   authContext: AuthContext
 ): Promise<CompleteEventPlan | null> {
+  await ensureDbReady();
   const db = getDb();
 
   // 1. Fetch event
@@ -364,6 +366,7 @@ export async function getEventWithPlan(
 export async function getUserEvents(
   authFilter: { userId?: string; workspaceId?: string }
 ): Promise<UserEventSummaryItem[]> {
+  await ensureDbReady();
   const db = getDb();
 
   let eventRows: (typeof events.$inferSelect)[];
@@ -463,6 +466,7 @@ export async function deleteEvent(
   eventId: string,
   authContext: AuthContext
 ): Promise<{ success: boolean }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -496,6 +500,7 @@ export async function updateBudgetItem(
   },
   authContext: AuthContext
 ): Promise<{ success: boolean; updatedItem: BudgetItemEntity }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -573,6 +578,7 @@ export async function addBudgetItem(
   },
   authContext: AuthContext
 ): Promise<BudgetItemEntity> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -625,6 +631,7 @@ export async function deleteBudgetItem(
   itemId: string,
   authContext: AuthContext
 ): Promise<{ success: boolean }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -657,6 +664,7 @@ export async function updateMilestone(
   },
   authContext: AuthContext
 ): Promise<{ success: boolean; milestone: TimelineMilestoneEntity }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -735,6 +743,7 @@ export async function updateVendorTask(
   },
   authContext: AuthContext
 ): Promise<{ success: boolean; task: VendorTaskEntity }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -793,6 +802,7 @@ export async function convertIdeaToPlanItem(
   asType: "BUDGET" | "TASK",
   authContext: AuthContext
 ): Promise<{ success: boolean; createdId: string }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -861,6 +871,7 @@ export async function updateEventDetails(
   },
   authContext: AuthContext
 ): Promise<{ success: boolean; event: EventEntity }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -934,6 +945,7 @@ export async function addMilestone(
   },
   authContext: AuthContext
 ): Promise<TimelineMilestoneEntity> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -997,6 +1009,7 @@ export async function deleteMilestone(
   milestoneId: string,
   authContext: AuthContext
 ): Promise<{ success: boolean }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -1028,6 +1041,7 @@ export async function addVendorTask(
   },
   authContext: AuthContext
 ): Promise<VendorTaskEntity> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db
@@ -1078,6 +1092,7 @@ export async function deleteVendorTask(
   taskId: string,
   authContext: AuthContext
 ): Promise<{ success: boolean }> {
+  await ensureDbReady();
   const db = getDb();
 
   const eventRows = await db

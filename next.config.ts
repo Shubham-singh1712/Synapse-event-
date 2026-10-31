@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
-  serverExternalPackages: ["postgres", "@electric-sql/pglite"],
+  serverExternalPackages: ["postgres", "@electric-sql/pglite", "@google/genai"],
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

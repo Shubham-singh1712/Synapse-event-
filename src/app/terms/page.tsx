@@ -2,7 +2,6 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, FileText, ArrowRight, ArrowUp, ListOrdered } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/auth-service";
 import PublicNavbar from "@/components/navigation/PublicNavbar";
 import PublicFooter from "@/components/navigation/PublicFooter";
 
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
     "Review the terms of service governing your use of SynapseEvent's celebration planning platform, deterministic budget calculations, and AI advisory tools.",
 };
 
-export default async function TermsPage() {
-  const user = await getCurrentUser();
+export default function TermsPage() {
+  const user = null;
 
   const sections = [
     { id: "acceptance", num: "01", title: "Acceptance of Terms" },

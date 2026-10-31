@@ -34,7 +34,7 @@ export default async function PublicLandingPage() {
         <CelebrationHeroShowcase user={user} />
 
         {/* 2b. Core Celebration Benefits Highlight */}
-        <section id="benefits" className="py-12 sm:py-16 bg-surface border-b border-border">
+        <section id="benefits" className="cv-auto py-12 sm:py-16 bg-surface border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {/* Benefit 1 */}
@@ -86,7 +86,7 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 3. Event Types Showcase (Weddings, Birthdays, Community Gatherings) */}
-        <section id="event-types" className="py-12 sm:py-16 md:py-20 bg-surface border-b border-border">
+        <section id="event-types" className="cv-auto py-12 sm:py-16 md:py-20 bg-surface border-b border-border">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
               <span className="text-xs font-bold uppercase tracking-widest text-coral">
@@ -248,7 +248,7 @@ export default async function PublicLandingPage() {
 
         {/* 4. Core Capabilities */}
         {/* 4. Thoughtfully Designed Features */}
-        <section id="capabilities" className="py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
+        <section id="capabilities" className="cv-auto py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-coral">
               Thoughtfully Designed Features
@@ -325,7 +325,7 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 5. How It Works */}
-        <section id="how-it-works" className="py-12 sm:py-16 md:py-20 bg-surface border-y border-border">
+        <section id="how-it-works" className="cv-auto py-12 sm:py-16 md:py-20 bg-surface border-y border-border">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto space-y-3 mb-10 sm:mb-12">
               <span className="text-xs font-bold uppercase tracking-widest text-coral">
@@ -374,7 +374,7 @@ export default async function PublicLandingPage() {
         </section>
 
         {/* 6. Studio Preview (Explicitly Labelled) */}
-        <section id="preview" className="py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
+        <section id="preview" className="cv-auto py-12 sm:py-16 md:py-20 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto space-y-3 mb-8 sm:mb-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-surface border border-border text-secondary">
               <Sparkles className="w-3.5 h-3.5 text-coral" />

@@ -141,3 +141,9 @@ body {
   -ms-overflow-style: none !important; /* IE and Edge */
   scrollbar-width: none !important; /* Firefox */
 }
+
+/* Defer layout and paint of below-the-fold sections for faster FCP/LCP/TBT */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
+}

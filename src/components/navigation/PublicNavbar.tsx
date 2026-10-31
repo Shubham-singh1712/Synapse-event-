@@ -7,10 +7,10 @@ import ThemeToggle from "@/components/theme/ThemeToggle";
 import type { AuthenticatedUser } from "@/lib/auth/auth-service";
 
 interface PublicNavbarProps {
-  user: AuthenticatedUser | null;
+  user?: AuthenticatedUser | null;
 }
 
-export default function PublicNavbar({ user }: PublicNavbarProps) {
+export default function PublicNavbar({ user = null }: PublicNavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Close mobile menu on Escape key press

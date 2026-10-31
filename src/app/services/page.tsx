@@ -2,7 +2,6 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUp, ListOrdered } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/auth-service";
 import PublicNavbar from "@/components/navigation/PublicNavbar";
 import PublicFooter from "@/components/navigation/PublicFooter";
 
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
     "Explore the range of event planning services, features, and tools offered by SynapseEvent, including AI assistance, budgeting, vendor management, and compliance guidance.",
 };
 
-export default async function ServicesPage() {
-  const user = await getCurrentUser();
+export default function ServicesPage() {
+  const user = null;
 
   const sections = [
     { id: "overview", num: "01", title: "Overview & Value Proposition" },

@@ -2,7 +2,6 @@ import React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Shield, Lock, ArrowRight, ArrowUp, ListOrdered } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/auth-service";
 import PublicNavbar from "@/components/navigation/PublicNavbar";
 import PublicFooter from "@/components/navigation/PublicFooter";
 
@@ -12,8 +11,8 @@ export const metadata: Metadata = {
     "Review SynapseEvent's complete privacy policy: how we store event parameters, process AI calculations with Google Gemini, secure authentication, and safeguard your celebration data.",
 };
 
-export default async function PrivacyPage() {
-  const user = await getCurrentUser();
+export default function PrivacyPage() {
+  const user = null;
 
   const sections = [
     { id: "overview", num: "01", title: "Overview & Commitment" },

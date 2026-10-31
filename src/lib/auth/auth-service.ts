@@ -272,13 +272,13 @@ export async function validateSessionToken(
 ): Promise<AuthenticatedUser | null> {
   if (!sessionToken || sessionToken.trim().length === 0) return null;
 
-  try {
-    // 1. Verify token signature first if it is a signed token
-    const verifiedPayload = verifySignedSessionToken(sessionToken);
-    if (sessionToken.includes(".") && !verifiedPayload) {
-      return null;
-    }
+  // 1. Verify token signature first if it is a signed token
+  const verifiedPayload = verifySignedSessionToken(sessionToken);
+  if (sessionToken.includes(".") && !verifiedPayload) {
+    return null;
+  }
 
+  try {
     await ensureDbReady();
     const db = getDb();
 
@@ -357,6 +357,14 @@ export async function validateSessionToken(
 
     return null;
   } catch {
+    if (verifiedPayload) {
+      return {
+        id: verifiedPayload.userId,
+        email: verifiedPayload.email,
+        name: verifiedPayload.name,
+        createdAt: new Date(),
+      };
+    }
     return null;
   }
 }

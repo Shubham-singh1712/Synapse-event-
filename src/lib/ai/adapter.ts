@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 import {
   AiGeneratedPlanResponseSchema,
   type GenerateEventPlanRequest,
@@ -112,7 +113,6 @@ export async function generateEventPlan(
 
   // 2. Live Gemini Generation
   try {
-    const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
     const systemInstruction = getArchetypeSystemPrompt(req.archetype);

@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 import type { CompleteEventPlan } from "@/lib/services/event-service";
 import { formatCentsToCurrency } from "@/lib/domain/money";
 import { formatIndianDate } from "@/lib/domain/i18n";
@@ -646,7 +647,6 @@ export async function executeCopilotChat(
   }
 
   try {
-    const { GoogleGenAI } = await import("@google/genai");
     const ai = new GoogleGenAI({ apiKey });
     const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
     const { summaryString } = buildEventGroundingContext(plan, intent);

@@ -1,7 +1,7 @@
-import type { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
-import type { drizzle as drizzlePglite } from "drizzle-orm/pglite";
-import type postgres from "postgres";
-import type { PGlite } from "@electric-sql/pglite";
+import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
+import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import postgres from "postgres";
+import { PGlite } from "@electric-sql/pglite";
 import path from "node:path";
 import fs from "node:fs";
 import * as schema from "./schema";
@@ -117,15 +117,8 @@ export function getDb(): AppDatabase {
 
   if (databaseUrl && databaseUrl.trim().length > 0) {
     // 1. Remote or Local PostgreSQL Server (DATABASE_URL provided)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const postgresDriver = require("postgres") as typeof postgres;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { drizzle } = require("drizzle-orm/postgres-js") as {
-      drizzle: typeof drizzlePostgres;
-    };
-
     if (!globalThis.__synapse_sql__) {
-      globalThis.__synapse_sql__ = postgresDriver(databaseUrl, {
+      globalThis.__synapse_sql__ = postgres(databaseUrl, {
         max: process.env.NODE_ENV === "production" ? 10 : 2,
         idle_timeout: 20,
         connect_timeout: 10,
@@ -133,22 +126,12 @@ export function getDb(): AppDatabase {
       });
     }
 
-    const db = drizzle(globalThis.__synapse_sql__, { schema });
+    const db = drizzlePostgres(globalThis.__synapse_sql__, { schema });
     globalThis.__synapse_db__ = db;
     return db;
   }
 
   // 2. Embedded Local PostgreSQL Database (Zero-Setup Option B)
-  // Lazy-load PGlite WASM runtime only when embedded database is actually needed
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PGlite: PGliteRuntime } = require("@electric-sql/pglite") as {
-    PGlite: typeof PGlite;
-  };
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { drizzle: drizzlePgliteRuntime } = require("drizzle-orm/pglite") as {
-    drizzle: typeof drizzlePglite;
-  };
-
   // In serverless environments (AWS Lambda / Vercel), process.cwd() is /var/task and read-only.
   // When running under Vercel/AWS or when VERCEL=1 or AWS_LAMBDA_FUNCTION_NAME is set, use /tmp/.data/pglite.
   const isServerless =
@@ -171,11 +154,11 @@ export function getDb(): AppDatabase {
   }
 
   if (!globalThis.__synapse_pglite__) {
-    globalThis.__synapse_pglite__ = new PGliteRuntime(dataDir);
+    globalThis.__synapse_pglite__ = new PGlite(dataDir);
     ensureEmbeddedMigrations(globalThis.__synapse_pglite__);
   }
 
-  const db = drizzlePgliteRuntime(globalThis.__synapse_pglite__, {
+  const db = drizzlePglite(globalThis.__synapse_pglite__, {
     schema,
   }) as unknown as AppDatabase;
   globalThis.__synapse_db__ = db;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -179,18 +179,24 @@ export default function PersonalDashboardClient({
     }
   };
 
-  // Group total managed budget by currency to prevent cross-currency arithmetic
-  const totalsByCurrency = events.reduce<Record<string, number>>((acc, e) => {
-    const curr = e.currency || "INR";
-    acc[curr] = (acc[curr] || 0) + (e.totalBudgetCents || 0);
-    return acc;
-  }, {});
+  // Group total managed budget by currency to prevent cross-currency arithmetic (memoized against events array)
+  const totalsByCurrency = useMemo(() => {
+    return events.reduce<Record<string, number>>((acc, e) => {
+      const curr = e.currency || "INR";
+      acc[curr] = (acc[curr] || 0) + (e.totalBudgetCents || 0);
+      return acc;
+    }, {});
+  }, [events]);
 
-  const formattedTotals = Object.entries(totalsByCurrency).map(([curr, amount]) =>
-    formatCentsToCurrency(amount, curr)
-  );
+  const formattedTotals = useMemo(() => {
+    return Object.entries(totalsByCurrency).map(([curr, amount]) =>
+      formatCentsToCurrency(amount, curr)
+    );
+  }, [totalsByCurrency]);
 
-  const upcomingCount = events.filter((e) => e.daysUntilEvent >= 0).length;
+  const upcomingCount = useMemo(() => {
+    return events.filter((e) => e.daysUntilEvent >= 0).length;
+  }, [events]);
 
   return (
     <div className="min-h-screen bg-page text-primary flex flex-col justify-between transition-colors">

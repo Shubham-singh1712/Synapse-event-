@@ -42,10 +42,6 @@ import {
   calculateTimelineSummary,
   type TimelineSummary,
 } from "@/lib/domain/timeline";
-import {
-  calculateGuestCountImpact,
-  calculateBudgetChangeImpact,
-} from "@/lib/domain/change-impact";
 import type { CompleteEventPlan } from "@/lib/services/event-service";
 import type {
   BudgetItemEntity,
@@ -113,6 +109,15 @@ const CelebrationCopilotDrawer = dynamic(
     loading: () => null,
   }
 );
+
+const PlanSimulationTab = dynamic(
+  () => import("./PlanSimulationTab").then((m) => m.PlanSimulationTab),
+  {
+    loading: () => <TabLoadingSkeleton title="plan adjustments and simulation" />,
+  }
+);
+
+import { BudgetDonutChart } from "./BudgetDonutChart";
 
 
 interface Props {
@@ -256,7 +261,6 @@ export default function EventWorkspaceClient({
   } | null>(null);
 
   // Command Centre Visual Controls
-  const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
   const [milestoneFilter, setMilestoneFilter] = useState<"ALL" | "DUE_SOON" | "COMPLETED">("ALL");
   const [taskBoardView, setTaskBoardView] = useState<"kanban" | "list">("kanban");
   const [taskFilterCategory, setTaskFilterCategory] = useState<string>("ALL");
@@ -287,12 +291,6 @@ export default function EventWorkspaceClient({
   // Add Budget Item Modal State (for BudgetLedgerTab)
   const [showAddBudgetModal, setShowAddBudgetModal] = useState(false);
 
-  // Change Impact Simulation State
-  const [simGuestCount, setSimGuestCount] = useState<number>(event.guestCount);
-  const [simBudgetDollars, setSimBudgetDollars] = useState<string>(
-    (event.totalBudgetCents / 100).toString()
-  );
-
   // Outstanding tasks count for unified Plan & Checklist tab navigation
   const outstandingTasksCount = useMemo(() => {
     const uncompletedMilestones = milestones.filter(
@@ -308,16 +306,20 @@ export default function EventWorkspaceClient({
     return uncompletedMilestones + uncompletedCustomTasks;
   }, [milestones, vendorTasks]);
 
-  // Derived summaries using pure deterministic domain functions
-  const budgetSummary: BudgetFinancialSummary = calculateBudgetSummary(
-    event.totalBudgetCents,
-    event.guestCount,
-    budgetItems
+  // Derived summaries using pure deterministic domain functions (memoized against underlying domain models)
+  const budgetSummary: BudgetFinancialSummary = useMemo(
+    () =>
+      calculateBudgetSummary(
+        event.totalBudgetCents,
+        event.guestCount,
+        budgetItems
+      ),
+    [event.totalBudgetCents, event.guestCount, budgetItems]
   );
 
-  const timelineSummary: TimelineSummary = calculateTimelineSummary(
-    event.eventDate,
-    milestones
+  const timelineSummary: TimelineSummary = useMemo(
+    () => calculateTimelineSummary(event.eventDate, milestones),
+    [event.eventDate, milestones]
   );
 
   // Clear feedback after 4 seconds
@@ -339,9 +341,7 @@ export default function EventWorkspaceClient({
         body: JSON.stringify({
           action: "UPDATE_EVENT_DETAILS",
           title: editEventTitle.trim() || event.title,
-          eventDate: editEventDate
-            ? new Date(editEventDate).toISOString()
-            : event.eventDate,
+          eventDate: editEventDate || event.eventDate,
           location: editEventLocation.trim() || event.location,
           guestCount,
           totalBudgetCents,
@@ -893,20 +893,6 @@ export default function EventWorkspaceClient({
     }
   };
 
-  // Change Impact Calculations
-  const guestImpact = calculateGuestCountImpact(
-    event.guestCount,
-    simGuestCount,
-    event.totalBudgetCents,
-    budgetItems
-  );
-
-  const budgetImpact = calculateBudgetChangeImpact(
-    event.totalBudgetCents,
-    toCents(parseFloat(simBudgetDollars) || 0),
-    budgetItems
-  );
-
   const ArchetypeIcon =
     event.archetype === "WEDDING"
       ? Heart
@@ -1389,90 +1375,15 @@ export default function EventWorkspaceClient({
 
               {/* Chart Grid: Donut + Category Bar Chart + Stage Comparison */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Donut Chart (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col items-center justify-center p-4 rounded-xl bg-page/50 dark:bg-black/20 border border-border/60">
-                  {donutSlices.length > 0 ? (
-                    <div className="flex flex-col items-center w-full space-y-4">
-                      {/* SVG Donut */}
-                      <div className="relative w-52 h-52">
-                        <svg viewBox="0 0 200 200" className="w-full h-full transform transition-transform">
-                          {donutSlices.map((slice) => {
-                            const isHovered = hoveredSlice === slice.name;
-                            return (
-                              <path
-                                key={slice.name}
-                                d={slice.pathData}
-                                fill={slice.color}
-                                className="transition-all duration-200 cursor-pointer hover:opacity-90"
-                                style={{
-                                  transform: isHovered ? "scale(1.03)" : "scale(1)",
-                                  transformOrigin: "100px 100px",
-                                }}
-                                onMouseEnter={() => setHoveredSlice(slice.name)}
-                                onMouseLeave={() => setHoveredSlice(null)}
-                              />
-                            );
-                          })}
-                        </svg>
-
-                        {/* Donut Center Display */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-4">
-                          <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted">
-                            {hoveredSlice || "Allocated"}
-                          </span>
-                          <span className="font-serif text-lg font-bold text-primary leading-tight mt-0.5">
-                            {hoveredSlice
-                              ? formatCentsToCurrency(
-                                  categoryAllocations.find((c) => c.name === hoveredSlice)?.cents || 0,
-                                  currency
-                                )
-                              : formatCentsToCurrency(budgetSummary.totalEstimatedCostCents, currency)}
-                          </span>
-                          <span className="text-[11px] text-champagne font-medium">
-                            {hoveredSlice
-                              ? `${categoryAllocations.find((c) => c.name === hoveredSlice)?.percentage}% of total`
-                              : `${budgetSummary.allocationPercent}% Allocated`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Donut Categorical Legend */}
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 w-full text-xs pt-2 border-t border-border/60">
-                        {categoryAllocations.slice(0, 6).map((cat) => (
-                          <div
-                            key={cat.name}
-                            onMouseEnter={() => setHoveredSlice(cat.name)}
-                            onMouseLeave={() => setHoveredSlice(null)}
-                            className="flex items-center justify-between gap-1 text-[11px] cursor-pointer hover:text-primary transition"
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span
-                                className="w-2.5 h-2.5 rounded-full shrink-0"
-                                style={{ backgroundColor: cat.color }}
-                              />
-                              <span className="truncate">{cat.name}</span>
-                            </div>
-                            <span className="font-mono text-muted shrink-0">{cat.percentage}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Graceful Empty State */
-                    <div className="py-10 text-center space-y-3">
-                      <div className="w-16 h-16 rounded-full border-2 border-dashed border-border mx-auto flex items-center justify-center text-muted">
-                        <PieChart className="w-8 h-8 opacity-40" />
-                      </div>
-                      <span className="text-xs text-muted block">No expenses in budget ledger yet</span>
-                      <button
-                        onClick={() => setShowAddBudgetModal(true)}
-                        className="px-3.5 py-1.5 rounded-xl bg-aubergine dark:bg-champagne text-white dark:text-aubergine text-xs font-medium"
-                      >
-                        + Add First Expense
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* Isolated Memoized Donut Chart (5 cols) */}
+                <BudgetDonutChart
+                  donutSlices={donutSlices}
+                  categoryAllocations={categoryAllocations}
+                  totalEstimatedCostCents={budgetSummary.totalEstimatedCostCents}
+                  allocationPercent={budgetSummary.allocationPercent}
+                  currency={currency}
+                  onAddExpense={() => setShowAddBudgetModal(true)}
+                />
 
                 {/* Horizontal Category Distribution + Financial Stages (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
@@ -2241,203 +2152,15 @@ export default function EventWorkspaceClient({
         )}
 
         {/* =========================================================================
-            SECTION 9: TAB 7 — PLAN ADJUSTMENTS (User-Facing Name)
+            SECTION 9: TAB 7 — PLAN ADJUSTMENTS (Dynamically Loaded)
            ========================================================================= */}
         {activeTab === "impact" && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Signature Atmospheric Atelier Panel */}
-            <div className="bg-aubergine text-cream dark:bg-[#1D1621] dark:text-[#FAF6F8] rounded-3xl p-6 sm:p-8 border border-champagne/30 shadow-atelier space-y-6 relative overflow-hidden">
-              {/* Subtle Champagne Radial Lighting Accent */}
-              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-champagne/10 via-transparent to-transparent rounded-full blur-2xl pointer-events-none" />
-
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sliders className="w-5 h-5 text-coral" />
-                  <h2 className="font-serif text-2xl sm:text-3xl font-normal text-cream dark:text-white tracking-tight">
-                    Plan Adjustments
-                  </h2>
-                </div>
-                <p className="text-xs text-champagne/90 italic font-serif text-base mb-1">
-                  See what changes when your plans evolve.
-                </p>
-                <p className="text-xs text-[#FAF6F8]/70 max-w-2xl leading-relaxed">
-                  Simulate variations in guest counts or overall budget envelope. The engine calculates ripple effects across all guest-scaled ledger items in integer paise ({currency}) without modifying your saved plan.
-                </p>
-              </div>
-
-              {/* Simulation Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
-                {/* Guest Count Slider */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-[#FAF6F8]/80">Simulate Guest Count:</span>
-                    <span className="font-serif text-lg font-normal text-coral">
-                      {simGuestCount} Guests{" "}
-                      <span className="text-xs text-[#FAF6F8]/50 font-sans">
-                        (Saved: {event.guestCount})
-                      </span>
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="1000"
-                    step="10"
-                    value={simGuestCount}
-                    onChange={(e) => setSimGuestCount(parseInt(e.target.value))}
-                    className="w-full accent-coral"
-                  />
-                  <div className="flex justify-between text-[10px] text-[#FAF6F8]/40 font-mono">
-                    <span>10 guests</span>
-                    <span>500 guests</span>
-                    <span>1,000 guests</span>
-                  </div>
-                </div>
-
-                {/* Total Budget Input */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-[#FAF6F8]/80">Simulate Total Budget:</span>
-                    <span className="font-serif text-lg font-normal text-coral">
-                      {formatCentsToCurrency(toCents(parseFloat(simBudgetDollars) || 0), currency)}{" "}
-                      <span className="text-xs text-[#FAF6F8]/50 font-sans">
-                        (Saved: {formatCentsToCurrency(event.totalBudgetCents, currency)})
-                      </span>
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    step="5000"
-                    min="1000"
-                    value={simBudgetDollars}
-                    onChange={(e) => setSimBudgetDollars(e.target.value)}
-                    className="w-full bg-black/30 border border-white/20 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-coral"
-                  />
-                </div>
-              </div>
-
-              {/* Contextual AI Copilot Plan Adjustment Explanation Trigger */}
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleOpenCopilotWithPrompt(
-                      `Analyze our proposed plan adjustment: simulating ${simGuestCount} guests (currently ${event.guestCount}) with ${simBudgetDollars ? formatCentsToCurrency(toCents(parseFloat(simBudgetDollars) || 0), currency) : "budget"}. Explain the cost ripple effects, capacity bottlenecks, and trade-offs.`
-                    )
-                  }
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-serif font-medium transition shadow-subtle hover:scale-105 active:scale-95"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-coral" />
-                  <span>Ask Copilot to Explain Adjustment</span>
-                </button>
-              </div>
-
-              {/* Simulation Results Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-[#FAF6F8]/60 block">
-                    Projected Total Cost
-                  </span>
-                  <span className="font-serif text-2xl font-normal text-white block">
-                    {formatCentsToCurrency(guestImpact.newProjectedEstimatedCents, currency)}
-                  </span>
-                  <span className="text-[11px] text-champagne block">
-                    Delta:{" "}
-                    {guestImpact.newProjectedEstimatedCents - guestImpact.previousTotalEstimatedCents >= 0 ? "+" : ""}
-                    {formatCentsToCurrency(
-                      guestImpact.newProjectedEstimatedCents - guestImpact.previousTotalEstimatedCents,
-                      currency
-                    )}
-                  </span>
-                </div>
-
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-[#FAF6F8]/60 block">
-                    Simulated Buffer
-                  </span>
-                  <span
-                    className={`font-serif text-2xl font-normal block ${
-                      budgetImpact.unallocatedBudgetCents < 0
-                        ? "text-red-400"
-                        : "text-emerald-400"
-                    }`}
-                  >
-                    {formatCentsToCurrency(budgetImpact.unallocatedBudgetCents, currency)}
-                  </span>
-                  <span className="text-[11px] text-[#FAF6F8]/60 block">
-                    {budgetImpact.isOverBudget ? "Over Budget Warning" : "Safe Reserve Buffer"}
-                  </span>
-                </div>
-
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-[#FAF6F8]/60 block">
-                    Affected Items
-                  </span>
-                  <span className="font-serif text-2xl font-normal text-white block">
-                    {guestImpact.guestSensitiveItemCount} Ledger Items
-                  </span>
-                  <span className="text-[11px] text-[#FAF6F8]/60 block">
-                    Scaled dynamically with guest count
-                  </span>
-                </div>
-              </div>
-
-              {/* Overrun Warning if applicable */}
-              {guestImpact.warnings.length > 0 && (
-                <div className="bg-coral/20 border border-coral/40 rounded-2xl p-4 text-xs text-white flex items-start gap-3">
-                  <AlertTriangle className="w-4 h-4 text-coral shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <span className="font-semibold block">Capacity &amp; Budget Warnings</span>
-                    <ul className="list-disc list-inside space-y-0.5 text-white/80">
-                      {guestImpact.warnings.map((w, i) => (
-                        <li key={i}>{w}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {/* Recalculated Guest-Scaled Items */}
-              <div className="pt-4 border-t border-white/10 space-y-3">
-                <h3 className="font-serif text-base font-normal text-white">
-                  Guest-Scaled Items Impact Ledger
-                </h3>
-                <div className="space-y-2">
-                  {budgetItems
-                    .filter((i) => i.isGuestSensitive && i.status !== "CANCELLED")
-                    .map((item) => {
-                      const scaledCents =
-                        event.guestCount > 0
-                          ? Math.round((item.estimatedCostCents * simGuestCount) / event.guestCount)
-                          : item.estimatedCostCents;
-
-                      return (
-                        <div
-                          key={item.id}
-                          className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-xs"
-                        >
-                          <div>
-                            <span className="font-medium text-white block">{item.description}</span>
-                            <span className="text-[11px] text-[#FAF6F8]/50 block">
-                              Category: {item.category}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-serif text-sm font-normal text-white block">
-                              {formatCentsToCurrency(scaledCents, currency)}
-                            </span>
-                            <span className="text-[10px] text-[#FAF6F8]/50 block">
-                              Simulated for {simGuestCount} guests (Saved:{" "}
-                              {formatCentsToCurrency(item.estimatedCostCents, currency)})
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </div>
-          </div>
+          <PlanSimulationTab
+            event={event}
+            budgetItems={budgetItems}
+            currency={currency}
+            onOpenCopilotWithPrompt={handleOpenCopilotWithPrompt}
+          />
         )}
       </div>
 

@@ -878,7 +878,11 @@ export async function updateEventDetails(
   };
 
   if (updates.title !== undefined) updatePayload.title = updates.title.trim();
-  if (updates.eventDate !== undefined) updatePayload.eventDate = updates.eventDate;
+  if (updates.eventDate !== undefined) {
+    updatePayload.eventDate = updates.eventDate.includes("T")
+      ? updates.eventDate.split("T")[0]
+      : updates.eventDate;
+  }
   if (updates.location !== undefined) updatePayload.location = updates.location.trim();
   if (updates.guestCount !== undefined) updatePayload.guestCount = Math.max(1, updates.guestCount);
   if (updates.totalBudgetCents !== undefined) updatePayload.totalBudgetCents = Math.max(0, updates.totalBudgetCents);

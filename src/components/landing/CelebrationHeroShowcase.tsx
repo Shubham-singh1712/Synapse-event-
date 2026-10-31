@@ -87,6 +87,20 @@ export function CelebrationHeroShowcase({ user }: Props) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  // Track rendered slide images to prevent concurrent network bandwidth contention on initial page load
+  // Slide 0 is preloaded immediately for optimal LCP; subsequent slides are deferred and loaded on demand.
+  const [renderedIndices, setRenderedIndices] = useState<number[]>([0]);
+
+  useEffect(() => {
+    const nextIdx = (activeIndex + 1) % HERO_SLIDES.length;
+    setRenderedIndices((prev) => {
+      if (prev.includes(activeIndex) && prev.includes(nextIdx)) return prev;
+      const set = new Set(prev);
+      set.add(activeIndex);
+      set.add(nextIdx);
+      return Array.from(set);
+    });
+  }, [activeIndex]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -182,16 +196,19 @@ export function CelebrationHeroShowcase({ user }: Props) {
               }`}
               aria-hidden={!isActive}
             >
-              <Image
-                src={slide.imageUrl}
-                alt={slide.imageAlt}
-                fill
-                priority={idx === 0}
-                sizes="100vw"
-                className={`object-cover object-center brightness-[0.92] contrast-[1.05] transition-transform duration-[8000ms] ease-out ${
-                  isActive && !prefersReducedMotion ? "scale-105" : "scale-100"
-                }`}
-              />
+              {(idx === 0 || isActive || renderedIndices.includes(idx)) && (
+                <Image
+                  src={slide.imageUrl}
+                  alt={slide.imageAlt}
+                  fill
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  sizes="100vw"
+                  className={`object-cover object-center brightness-[0.92] contrast-[1.05] transition-transform duration-[8000ms] ease-out ${
+                    isActive && !prefersReducedMotion ? "scale-105" : "scale-100"
+                  }`}
+                />
+              )}
             </div>
           );
         })}
